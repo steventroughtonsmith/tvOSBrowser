@@ -11,11 +11,6 @@
 
 typedef struct _Input
 {
-	CGFloat up;
-	CGFloat down;
-	CGFloat left;
-	CGFloat right;
-	
 	CGFloat x;
 	CGFloat y;
 } Input;
@@ -150,11 +145,6 @@ typedef struct _Input
 {
 	self.controller = [GCController controllers].firstObject;
 	self.controller.microGamepad.dpad.valueChangedHandler = ^(GCControllerDirectionPad *pad, float x, float y) {
-		input.up = 0;
-		input.down = 0;
-		input.right = 0;
-		input.left = 0;
-		
 		input.x = x;
 		input.y = -y;
 	};
