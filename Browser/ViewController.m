@@ -34,8 +34,6 @@ typedef struct _Input
 @property BOOL cursorMode;
 @end
 
-
-
 @implementation ViewController
 
 - (void)viewDidLoad {
@@ -59,8 +57,6 @@ typedef struct _Input
 	self.webview.scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
 	
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setupController) name:GCControllerDidConnectNotification object:nil];
-	
-	self.webview.scrollView.gestureRecognizers.firstObject.enabled = NO;
 }
 
 -(void)toggleMode
@@ -80,7 +76,6 @@ typedef struct _Input
 		cursorView.hidden = YES;
 	}
 }
-
 
 - (void)alertTextFieldDidChange:(UITextField *)sender
 {
