@@ -3,6 +3,7 @@
 //  Browser
 //
 //  Created by Steven Troughton-Smith on 20/09/2015.
+//  Improved by Jip van Akker on 14/10/2015
 //  Copyright © 2015 High Caffeine Content. All rights reserved.
 //
 
@@ -18,8 +19,8 @@ typedef struct _Input
 
 @interface ViewController ()
 {
-	UIView *cursorView;
-	Input input;
+    UIImageView *cursorView;
+    Input input;
 	NSString *temporaryURL;
 }
 
@@ -27,6 +28,9 @@ typedef struct _Input
 @property (strong) CADisplayLink *link;
 @property (strong, nonatomic) GCController *controller;
 @property BOOL cursorMode;
+@property CGPoint lastTouchLocation;
+
+
 @end
 
 @implementation ViewController
@@ -34,10 +38,12 @@ typedef struct _Input
 - (void)viewDidLoad {
 	[super viewDidLoad];
 	
-	cursorView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
+	cursorView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
 	cursorView.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
-	cursorView.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"Cursor"]];
+    cursorView.image = [UIImage imageNamed:@"Cursor"];
+    cursorView.backgroundColor = [UIColor clearColor];
 	cursorView.hidden = YES;
+    
 	
 	self.webview = [[UIWebView alloc] initWithFrame:[UIScreen mainScreen].bounds];
 	[self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.apple.com"]]];
@@ -45,13 +51,10 @@ typedef struct _Input
 	[self.view addSubview:self.webview];
 	[self.view addSubview:cursorView];
 	
-	self.link = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateCursor)];
-	[self.link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-	
+
 	self.webview.scrollView.bounces = YES;
 	self.webview.scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
 	
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setupController) name:GCControllerDidConnectNotification object:nil];
 }
 
 -(void)toggleMode
@@ -94,17 +97,35 @@ typedef struct _Input
 		else
 			[self.webview goBack];
 	}
+    else if (presses.anyObject.type == UIPressTypeUpArrow)
+    {
+        // Zoom testing (needs work) (requires old remote for up arrow)
+        UIScrollView * sv = self.webview.scrollView;
+        [sv setZoomScale:30];
+    }
+    else if (presses.anyObject.type == UIPressTypeDownArrow)
+    {
+    }
 	else if (presses.anyObject.type == UIPressTypeSelect)
 	{
-		/* Gross. */
-		CGPoint point = [self.webview convertPoint:cursorView.frame.origin toView:nil];
-		[self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).click()", (int)point.x, (int)point.y]];
+        if(!self.cursorMode)
+        {
+            [self toggleMode];
+        }
+        else
+        {
+            /* Gross. */
+            CGPoint point = [self.webview convertPoint:cursorView.frame.origin toView:nil];
+            [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).click()", (int)point.x, (int)point.y]];
+        
+            [self toggleMode];
+        }
 	}
 	
 	else if (presses.anyObject.type == UIPressTypePlayPause)
 	{
 		UIAlertController *alertController = [UIAlertController
-											  alertControllerWithTitle:@"Enter Address"
+											  alertControllerWithTitle:@"Enter URL:"
 											  message:@""
 											  preferredStyle:UIAlertControllerStyleAlert];
 		
@@ -119,7 +140,7 @@ typedef struct _Input
 		 }];
 		
 		UIAlertAction *okAction = [UIAlertAction
-								   actionWithTitle:@"OK"
+								   actionWithTitle:@"GO"
 								   style:UIAlertActionStyleDefault
 								   handler:^(UIAlertAction *action)
 								   {
@@ -132,37 +153,49 @@ typedef struct _Input
 		[self presentViewController:alertController animated:YES completion:nil];
 
 	}
-	else if (presses.anyObject.type == UIPressTypeUpArrow)
-	{
-		[self toggleMode];
-	}
 }
 
 
 #pragma mark - Cursor Input
 
--(void)setupController
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-	self.controller = [GCController controllers].firstObject;
-	self.controller.microGamepad.dpad.valueChangedHandler = ^(GCControllerDirectionPad *pad, float x, float y) {
-		input.x = x;
-		input.y = -y;
-	};
+    self.lastTouchLocation = CGPointMake(-1, -1);
 }
 
--(void)updateCursor
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-	CGFloat delta = 5.0;
-	
-	if (!self.cursorMode)
-		return;
-	
-	if (input.x != 0)
-	cursorView.transform = CGAffineTransformTranslate(cursorView.transform, pow(2,delta*fabs(input.x))*(input.x>0?1:-1), 0);
-	
-	if (input.y != 0)
-		cursorView.transform = CGAffineTransformTranslate(cursorView.transform, 0, pow(2,delta*fabs(input.y))*(input.y>0?1:-1));
-
+    for (UITouch *touch in touches)
+    {
+        CGPoint location = [touch locationInView:self.webview];
+        
+        if(self.lastTouchLocation.x == -1 && self.lastTouchLocation.y == -1)
+        {
+            // Prevent cursor from recentering
+            self.lastTouchLocation = location;
+        }
+        else
+        {
+            CGFloat xDiff = location.x - self.lastTouchLocation.x;
+            CGFloat yDiff = location.y - self.lastTouchLocation.y;
+            CGRect rect = cursorView.frame;
+            
+            if(rect.origin.x + xDiff >= 0 && rect.origin.x + xDiff <= 1920)
+                rect.origin.x += xDiff;//location.x - self.startPos.x;//+= xDiff; //location.x;
+            
+            if(rect.origin.y + yDiff >= 0 && rect.origin.y + yDiff <= 1080)
+                rect.origin.y += yDiff;//location.y - self.startPos.y;//+= yDiff; //location.y;
+            
+            cursorView.frame = rect;
+            self.lastTouchLocation = location;
+        }
+        
+        // We only use one touch, break the loop
+        break;
+    }
+    
 }
+
+
 
 @end
