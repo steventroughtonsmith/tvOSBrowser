@@ -6,15 +6,20 @@ Very simplistic browser for tvOS using private API (aka UIWebView). This is abou
 You'll need to redefine the following in Availability.h to build successfully.
 
 ```
-__TVOS_UNAVAILABLE
-__TVOS_PROHIBITED
+#define __TVOS_UNAVAILABLE                    __OS_AVAILABILITY(tvos,unavailable)
+#define __TVOS_PROHIBITED                     __OS_AVAILABILITY(tvos,unavailable)
 ```
+For example, to:
+```
+#define __TVOS_UNAVAILABLE_NOTQUITE                    __OS_AVAILABILITY(tvos,unavailable)
+#define __TVOS_PROHIBITED_NOTQUITE                     __OS_AVAILABILITY(tvos,unavailable)
+```
+Do this for Availability.h for both simulator and device if you want to run it on the real hardware.
+
 How to Use
 =============
-Tap the top of the touch area on the Apple TV Remote to switch between cursor & scroll mode.
 
-Click the touch area to click.
-
-Menu will navigate back.
-
-The Play/Pause button will let you input URLs (no fuzzy matching or auto-search).
+- Tap on the center of the touch area of the Apple TV Remote to switch between cursor & scroll mode.
+- Click the touch area to click.
+- Menu will navigate back.
+- The Play/Pause button will let you input URLs (no fuzzy matching or auto-search).
