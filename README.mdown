@@ -1,8 +1,7 @@
 tvOS Browser
 =============
 
-Very simplistic browser for tvOS using private API (aka UIWebView). This is about as complete as this project is ever going to get, so just treat it as sample code.
-
+Very simplistic browser for tvOS using private API (aka UIWebView).
 You'll need to redefine the following in Availability.h to build successfully.
 
 ```
