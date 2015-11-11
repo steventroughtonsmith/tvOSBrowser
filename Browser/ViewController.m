@@ -12,8 +12,8 @@
 
 typedef struct _Input
 {
-	CGFloat x;
-	CGFloat y;
+    CGFloat x;
+    CGFloat y;
 } Input;
 
 
@@ -21,7 +21,7 @@ typedef struct _Input
 {
     UIImageView *cursorView;
     Input input;
-	NSString *temporaryURL;
+    NSString *temporaryURL;
 }
 
 @property UIWebView *webview;
@@ -36,67 +36,67 @@ typedef struct _Input
 @implementation ViewController
 
 - (void)viewDidLoad {
-	[super viewDidLoad];
-	
-	cursorView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
-	cursorView.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
+    [super viewDidLoad];
+    
+    cursorView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
+    cursorView.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
     cursorView.image = [UIImage imageNamed:@"Cursor"];
     cursorView.backgroundColor = [UIColor clearColor];
-	cursorView.hidden = YES;
+    cursorView.hidden = YES;
     
-	
-	self.webview = [[UIWebView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-	[self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.apple.com"]]];
-	
-	[self.view addSubview:self.webview];
-	[self.view addSubview:cursorView];
-	
-
-	self.webview.scrollView.bounces = YES;
-	self.webview.scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
-	
+    
+    self.webview = [[UIWebView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.google.com"]]];
+    
+    [self.view addSubview:self.webview];
+    [self.view addSubview:cursorView];
+    
+    
+    self.webview.scrollView.bounces = YES;
+    self.webview.scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
+    
 }
 
 -(void)toggleMode
 {
-	self.cursorMode = !self.cursorMode;
-	
-	if (self.cursorMode)
-	{
-		self.webview.scrollView.scrollEnabled = NO;
-		self.webview.userInteractionEnabled = NO;
-		cursorView.hidden = NO;
-	}
-	else
-	{
-		self.webview.scrollView.scrollEnabled = YES;
-		self.webview.userInteractionEnabled = YES;
-		cursorView.hidden = YES;
-	}
+    self.cursorMode = !self.cursorMode;
+    
+    if (self.cursorMode)
+    {
+        self.webview.scrollView.scrollEnabled = NO;
+        self.webview.userInteractionEnabled = NO;
+        cursorView.hidden = NO;
+    }
+    else
+    {
+        self.webview.scrollView.scrollEnabled = YES;
+        self.webview.userInteractionEnabled = YES;
+        cursorView.hidden = YES;
+    }
 }
 
 - (void)alertTextFieldDidChange:(UITextField *)sender
 {
-	UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
-	if (alertController)
-	{
-		UITextField *urlField = alertController.textFields.firstObject;
-		temporaryURL = urlField.text;
-	}
+    UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
+    if (alertController)
+    {
+        UITextField *urlField = alertController.textFields.firstObject;
+        temporaryURL = urlField.text;
+    }
 }
 
 -(void)pressesEnded:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event
 {
-	
-	if (presses.anyObject.type == UIPressTypeMenu)
-	{
-		if (self.presentedViewController)
-		{
-			[self dismissViewControllerAnimated:YES completion:nil];
-		}
-		else
-			[self.webview goBack];
-	}
+    
+    if (presses.anyObject.type == UIPressTypeMenu)
+    {
+        if (self.presentedViewController)
+        {
+            [self dismissViewControllerAnimated:YES completion:nil];
+        }
+        else
+            [self.webview goBack];
+    }
     else if (presses.anyObject.type == UIPressTypeUpArrow)
     {
         // Zoom testing (needs work) (requires old remote for up arrow)
@@ -106,8 +106,8 @@ typedef struct _Input
     else if (presses.anyObject.type == UIPressTypeDownArrow)
     {
     }
-	else if (presses.anyObject.type == UIPressTypeSelect)
-	{
+    else if (presses.anyObject.type == UIPressTypeSelect)
+    {
         if(!self.cursorMode)
         {
             [self toggleMode];
@@ -117,42 +117,61 @@ typedef struct _Input
             /* Gross. */
             CGPoint point = [self.webview convertPoint:cursorView.frame.origin toView:nil];
             [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).click()", (int)point.x, (int)point.y]];
-        
+            
             [self toggleMode];
         }
-	}
-	
-	else if (presses.anyObject.type == UIPressTypePlayPause)
-	{
-		UIAlertController *alertController = [UIAlertController
-											  alertControllerWithTitle:@"Enter URL:"
-											  message:@""
-											  preferredStyle:UIAlertControllerStyleAlert];
-		
-		[alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
-		 {
-			 textField.keyboardType = UIKeyboardTypeURL;
-			 textField.placeholder = @"www.apple.com";
-			 [textField addTarget:self
-						   action:@selector(alertTextFieldDidChange:)
-				 forControlEvents:UIControlEventEditingChanged];
-
-		 }];
-		
-		UIAlertAction *okAction = [UIAlertAction
-								   actionWithTitle:@"GO"
-								   style:UIAlertActionStyleDefault
-								   handler:^(UIAlertAction *action)
-								   {
-									   [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://%@", temporaryURL]]]];
-									   temporaryURL = nil;
-								   }];
-		
-		[alertController addAction:okAction];
-		
-		[self presentViewController:alertController animated:YES completion:nil];
-
-	}
+    }
+    
+    else if (presses.anyObject.type == UIPressTypePlayPause)
+    {
+        UIAlertController *alertController = [UIAlertController
+                                              alertControllerWithTitle:@"Enter URL:"
+                                              message:@""
+                                              preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+         {
+             textField.keyboardType = UIKeyboardTypeURL;
+             textField.placeholder = @"www.apple.com";
+             [textField addTarget:self
+                           action:@selector(alertTextFieldDidChange:)
+                 forControlEvents:UIControlEventEditingChanged];
+             
+         }];
+        
+        UIAlertAction *okAction = [UIAlertAction
+                                   actionWithTitle:@"GO"
+                                   style:UIAlertActionStyleDefault
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                       if ([temporaryURL containsString:@" "] || ![temporaryURL containsString:@"."]) {
+                                           temporaryURL = [temporaryURL stringByReplacingOccurrencesOfString:@" " withString:@"+"];
+                                           temporaryURL = [temporaryURL stringByReplacingOccurrencesOfString:@"." withString:@"+"];
+                                           temporaryURL = [temporaryURL stringByReplacingOccurrencesOfString:@"++" withString:@"+"];
+                                           temporaryURL = [temporaryURL stringByReplacingOccurrencesOfString:@"++" withString:@"+"];
+                                           temporaryURL = [temporaryURL stringByReplacingOccurrencesOfString:@"++" withString:@"+"];
+                                           temporaryURL = [temporaryURL stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+                                           [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?client=safari&rls=en&q=%@&ie=UTF-8&oe=UTF-8", temporaryURL]]]];
+                                           temporaryURL = nil;
+                                       }
+                                       else {
+                                           if ([temporaryURL containsString:@"http://"]) {
+                                               [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@", temporaryURL]]]];
+                                               temporaryURL = nil;
+                                           }
+                                           else {
+                                               [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://%@", temporaryURL]]]];
+                                               temporaryURL = nil;
+                                           }
+                                       }
+                                       
+                                   }];
+        
+        [alertController addAction:okAction];
+        
+        [self presentViewController:alertController animated:YES completion:nil];
+        
+    }
 }
 
 
