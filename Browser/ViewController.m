@@ -46,6 +46,22 @@ typedef struct _Input
 -(void) webViewDidFinishLoad:(UIWebView *)webView {
     [loadingSpinner stopAnimating];
     [self.view bringSubviewToFront:loadingSpinner];
+    NSString *theTitle=[webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+    NSString *currentURL = [webView stringByEvaluatingJavaScriptFromString:@"window.location"];
+    NSArray *toSaveItem = [NSArray arrayWithObjects:currentURL, theTitle, nil];
+    NSMutableArray *historyArray = [NSMutableArray arrayWithObjects:toSaveItem, nil];
+    if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] != nil) {
+        NSMutableArray *savedArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] mutableCopy];
+        if ([savedArray count] > 0) {
+            if (savedArray[0][0] == currentURL) {
+                [historyArray removeObjectAtIndex:0];
+            }
+        }
+        [historyArray addObjectsFromArray:[[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"]];
+    }
+    NSArray *toStoreArray = historyArray;
+    [[NSUserDefaults standardUserDefaults] setObject:toStoreArray forKey:@"HISTORY"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 -(void)viewDidAppear:(BOOL)animated {
     loadingSpinner.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
@@ -154,9 +170,10 @@ typedef struct _Input
                                        }];
         UIAlertAction *clearCacheAction = [UIAlertAction
                                             actionWithTitle:@"Clear Cache"
-                                            style:UIAlertActionStyleDefault
+                                            style:UIAlertActionStyleDestructive
                                             handler:^(UIAlertAction *action)
                                             {
+                                                _inputViewVisible = NO;
                                                 [[NSURLCache sharedURLCache] removeAllCachedResponses];
                                                 [[NSUserDefaults standardUserDefaults] synchronize];
                                                 [self.webview reload];
@@ -164,9 +181,10 @@ typedef struct _Input
                                             }];
         UIAlertAction *clearCookiesAction = [UIAlertAction
                                            actionWithTitle:@"Clear Cookies"
-                                           style:UIAlertActionStyleDefault
+                                           style:UIAlertActionStyleDestructive
                                            handler:^(UIAlertAction *action)
                                            {
+                                               _inputViewVisible = NO;
                                                NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
                                                for (NSHTTPCookie *cookie in [storage cookies]) {
                                                    [storage deleteCookie:cookie];
@@ -196,6 +214,60 @@ typedef struct _Input
                                                     }
                                                 }
                                             }];
+        UIAlertAction *cancelAction = [UIAlertAction
+                                       actionWithTitle:@"Cancel"
+                                       style:UIAlertActionStyleCancel
+                                       handler:^(UIAlertAction *action)
+                                       {
+                                           _inputViewVisible = NO;
+                                       }];
+        UIAlertAction *viewHistoryAction = [UIAlertAction
+                                            actionWithTitle:@"History"
+                                            style:UIAlertActionStyleDefault
+                                            handler:^(UIAlertAction *action)
+                                            {
+                                                _inputViewVisible = NO;
+                                                NSArray *indexableArray = [[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"];
+                                                UIAlertController *historyAlertController = [UIAlertController
+                                                                                             alertControllerWithTitle:@"History"
+                                                                                             message:@""
+                                                                                             preferredStyle:UIAlertControllerStyleAlert];
+                                                UIAlertAction *clearHistoryAction = [UIAlertAction
+                                                                                     actionWithTitle:@"Clear History"
+                                                                                     style:UIAlertActionStyleDestructive
+                                                                                     handler:^(UIAlertAction *action)
+                                                                                     {
+                                                                                         _inputViewVisible = NO;
+                                                                                         [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"HISTORY"];
+                                                                                         [[NSUserDefaults standardUserDefaults] synchronize];
+                                                                                         
+                                                                                     }];
+                                                if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] != nil) {
+                                                    [historyAlertController addAction:clearHistoryAction];
+                                                }
+                                                for (int i = 0; i < [indexableArray count]; i++) {
+                                                    NSString *objectTitle = indexableArray[i][1];
+                                                    NSString *objectSubtitle = indexableArray[i][0];
+                                                    if ([[objectTitle stringByReplacingOccurrencesOfString:@" " withString:@""] isEqualToString: @""]) {
+                                                        objectTitle = nil;
+                                                    }
+                                                    else {
+                                                        objectTitle = [NSString stringWithFormat:@"%@ - %@",objectTitle,objectSubtitle ];
+                                                    }
+                                                    UIAlertAction *historyItem = [UIAlertAction
+                                                                                  actionWithTitle:objectTitle
+                                                                                  style:UIAlertActionStyleDefault
+                                                                                  handler:^(UIAlertAction *action)
+                                                                                  {
+                                                                                      _inputViewVisible = NO;
+                                                                                      [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString: indexableArray[i][0]]]];
+                                                                                  }];
+                                                    [historyAlertController addAction:historyItem];
+                                                }
+                                                [historyAlertController addAction:cancelAction];
+                                                [self presentViewController:historyAlertController animated:YES completion:nil];
+                                            }];
+        
         UIAlertAction *reloadAction = [UIAlertAction
                                        actionWithTitle:@"Reload"
                                        style:UIAlertActionStyleDefault
@@ -204,18 +276,12 @@ typedef struct _Input
                                            _inputViewVisible = NO;
                                            [self.webview reload];
                                        }];
-        UIAlertAction *cancelAction = [UIAlertAction
-                                       actionWithTitle:@"Cancel"
-                                       style:UIAlertActionStyleDefault
-                                       handler:^(UIAlertAction *action)
-                                       {
-                                           _inputViewVisible = NO;
-                                       }];
         if (_webview.request != nil) {
             if (![_webview.request.URL.absoluteString  isEqual: @""]) {
                 [alertController addAction:reloadAction];
             }
         }
+        [alertController addAction:viewHistoryAction];
         [alertController addAction:loadHomePageAction];
         [alertController addAction:setHomePageAction];
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"MobileMode"]) {
@@ -325,7 +391,7 @@ typedef struct _Input
      */
     UIAlertAction *cancelAction = [UIAlertAction
                                    actionWithTitle:@"Cancel"
-                                   style:UIAlertActionStyleDefault
+                                   style:UIAlertActionStyleCancel
                                    handler:^(UIAlertAction *action)
                                    {
                                    _inputViewVisible = NO;
@@ -362,7 +428,7 @@ typedef struct _Input
                                           preferredStyle:UIAlertControllerStyleAlert];
     
     UIAlertAction *searchAction = [UIAlertAction
-                                   actionWithTitle:@"Search Google for This"
+                                   actionWithTitle:@"Google This Page"
                                    style:UIAlertActionStyleDefault
                                    handler:^(UIAlertAction *action)
                                    {
@@ -398,6 +464,13 @@ typedef struct _Input
                                        _inputViewVisible = NO;
                                        [self requestURL];
                                    }];
+    UIAlertAction *cancelAction = [UIAlertAction
+                                   actionWithTitle:@"Dismiss"
+                                   style:UIAlertActionStyleCancel
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                       _inputViewVisible = NO;
+                                   }];
     if (requestURL != nil) {
         if ([requestURL length] > 1) {
             [alertController addAction:searchAction];
@@ -415,7 +488,7 @@ typedef struct _Input
         [alertController addAction:newurlAction];
     }
     
-    
+    [alertController addAction:cancelAction];
     [self presentViewController:alertController animated:YES completion:nil];
 }
 -(void)toggleMode
@@ -603,7 +676,7 @@ typedef struct _Input
                                               }];
                 UIAlertAction *cancelAction = [UIAlertAction
                                                actionWithTitle:@"Cancel"
-                                               style:UIAlertActionStyleDefault
+                                               style:UIAlertActionStyleCancel
                                                handler:^(UIAlertAction *action)
                                                {
                                                    _inputViewVisible = NO;
