@@ -41,11 +41,11 @@ typedef struct _Input
 }
 -(void) webViewDidStartLoad:(UIWebView *)webView {
     [loadingSpinner startAnimating];
-    [self.view bringSubviewToFront:loadingSpinner];
+    //[self.view bringSubviewToFront:loadingSpinner];
 }
 -(void) webViewDidFinishLoad:(UIWebView *)webView {
     [loadingSpinner stopAnimating];
-    [self.view bringSubviewToFront:loadingSpinner];
+    //[self.view bringSubviewToFront:loadingSpinner];
     NSString *theTitle=[webView stringByEvaluatingJavaScriptFromString:@"document.title"];
     NSString *currentURL = webView.request.URL.absoluteString;
     NSArray *toSaveItem = [NSArray arrayWithObjects:currentURL, theTitle, nil];
@@ -71,7 +71,7 @@ typedef struct _Input
         [[NSUserDefaults standardUserDefaults] synchronize];
     }
     else if (_webview.request == nil) {
-        //[self requestURL];
+        //[self requestURLorSearchInput];
         [self loadHomePage];
     }
 }
@@ -141,9 +141,9 @@ typedef struct _Input
                                            [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MobileMode"];
                                            [[NSUserDefaults standardUserDefaults] synchronize];
-                                           if (requestURL != nil) {
-                                               if (![requestURL isEqual:@""]) {
-                                                   [[NSUserDefaults standardUserDefaults] setObject:requestURL forKey:@"savedURLtoReopen"];
+                                           if (_webview.request != nil) {
+                                               if (![_webview.request.URL.absoluteString isEqual:@""]) {
+                                                   [[NSUserDefaults standardUserDefaults] setObject:_webview.request.URL.absoluteString forKey:@"savedURLtoReopen"];
                                                    [[NSUserDefaults standardUserDefaults] synchronize];
                                                }
                                            }
@@ -160,9 +160,9 @@ typedef struct _Input
                                            [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MobileMode"];
                                            [[NSUserDefaults standardUserDefaults] synchronize];
-                                           if (requestURL != nil) {
-                                               if (![requestURL isEqual:@""]) {
-                                                   [[NSUserDefaults standardUserDefaults] setObject:requestURL forKey:@"savedURLtoReopen"];
+                                           if (_webview.request != nil) {
+                                               if (![_webview.request.URL.absoluteString isEqual:@""]) {
+                                                   [[NSUserDefaults standardUserDefaults] setObject:_webview.request.URL.absoluteString forKey:@"savedURLtoReopen"];
                                                    [[NSUserDefaults standardUserDefaults] synchronize];
                                                }
                                            }
@@ -207,9 +207,9 @@ typedef struct _Input
                                             handler:^(UIAlertAction *action)
                                             {
                                                 _inputViewVisible = NO;
-                                                if (requestURL != nil) {
-                                                    if (![requestURL isEqual:@""]) {
-                                                        [[NSUserDefaults standardUserDefaults] setObject:requestURL forKey:@"homepage"];
+                                                if (_webview.request != nil) {
+                                                    if (![_webview.request.URL.absoluteString isEqual:@""]) {
+                                                        [[NSUserDefaults standardUserDefaults] setObject:_webview.request.URL.absoluteString forKey:@"homepage"];
                                                         [[NSUserDefaults standardUserDefaults] synchronize];
                                                     }
                                                 }
@@ -303,7 +303,7 @@ typedef struct _Input
         [self toggleMode];
     }
 }
--(void)requestURL
+-(void)requestURLorSearchInput
 {
     _inputViewVisible = YES;
     UIAlertController *alertController = [UIAlertController
@@ -342,7 +342,7 @@ typedef struct _Input
                                            [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", toMod]]]];
                                        }
                                        else {
-                                           [self requestURL];
+                                           [self requestURLorSearchInput];
                                        }
                                    }
                                    else {
@@ -356,7 +356,7 @@ typedef struct _Input
                                            }
                                        }
                                        else {
-                                           [self requestURL];
+                                           [self requestURLorSearchInput];
                                        }
                                    //}
                                    
@@ -379,7 +379,7 @@ typedef struct _Input
                                            [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", toMod]]]];
                                        }
                                        else {
-                                           [self requestURL];
+                                           [self requestURLorSearchInput];
                                        }
                                    }];
     /*
@@ -423,75 +423,80 @@ typedef struct _Input
 }
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
     [loadingSpinner stopAnimating];
-    _inputViewVisible = YES;
-    UIAlertController *alertController = [UIAlertController
-                                          alertControllerWithTitle:@"Could Not Load Webpage"
-                                          message:[error localizedDescription]
-                                          preferredStyle:UIAlertControllerStyleAlert];
-    
-    UIAlertAction *searchAction = [UIAlertAction
-                                   actionWithTitle:@"Google This Page"
-                                   style:UIAlertActionStyleDefault
-                                   handler:^(UIAlertAction *action)
-                                   {
-                                       _inputViewVisible = NO;
-                                       if (requestURL != nil) {
-                                           if ([requestURL length] > 1) {
-                                               NSString *lastChar = [requestURL substringFromIndex: [requestURL length] - 1];
-                                               if ([lastChar isEqualToString:@"/"]) {
-                                                   NSString *newString = [requestURL substringToIndex:[requestURL length]-1];
-                                                   requestURL = newString;
+    switch (error.code) {
+        case (-999, 204):
+            return;
+        default:
+            _inputViewVisible = YES;
+            UIAlertController *alertController = [UIAlertController
+                                                  alertControllerWithTitle:@"Could Not Load Webpage"
+                                                  message:[error localizedDescription]
+                                                  preferredStyle:UIAlertControllerStyleAlert];
+            
+            UIAlertAction *searchAction = [UIAlertAction
+                                           actionWithTitle:@"Google This Page"
+                                           style:UIAlertActionStyleDefault
+                                           handler:^(UIAlertAction *action)
+                                           {
+                                               _inputViewVisible = NO;
+                                               if (requestURL != nil) {
+                                                   if ([requestURL length] > 1) {
+                                                       NSString *lastChar = [requestURL substringFromIndex: [requestURL length] - 1];
+                                                       if ([lastChar isEqualToString:@"/"]) {
+                                                           NSString *newString = [requestURL substringToIndex:[requestURL length]-1];
+                                                           requestURL = newString;
+                                                       }
+                                                   }
+                                                   requestURL = [requestURL stringByReplacingOccurrencesOfString:@"http://" withString:@""];
+                                                   requestURL = [requestURL stringByReplacingOccurrencesOfString:@"https://" withString:@""];
+                                                   requestURL = [requestURL stringByReplacingOccurrencesOfString:@"www." withString:@""];
+                                                   [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", requestURL]]]];
                                                }
-                                           }
-                                           requestURL = [requestURL stringByReplacingOccurrencesOfString:@"http://" withString:@""];
-                                           requestURL = [requestURL stringByReplacingOccurrencesOfString:@"https://" withString:@""];
-                                           requestURL = [requestURL stringByReplacingOccurrencesOfString:@"www." withString:@""];
-                                           [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", requestURL]]]];
-                                       }
-                                       
-                                   }];
-    UIAlertAction *reloadAction = [UIAlertAction
-                                   actionWithTitle:@"Reload"
-                                   style:UIAlertActionStyleDefault
-                                   handler:^(UIAlertAction *action)
-                                   {
-                                       _inputViewVisible = NO;
-                                       [self.webview reload];
-                                   }];
-    UIAlertAction *newurlAction = [UIAlertAction
-                                   actionWithTitle:@"Enter a URL or Search"
-                                   style:UIAlertActionStyleDefault
-                                   handler:^(UIAlertAction *action)
-                                   {
-                                       _inputViewVisible = NO;
-                                       [self requestURL];
-                                   }];
-    UIAlertAction *cancelAction = [UIAlertAction
-                                   actionWithTitle:@"Dismiss"
-                                   style:UIAlertActionStyleCancel
-                                   handler:^(UIAlertAction *action)
-                                   {
-                                       _inputViewVisible = NO;
-                                   }];
-    if (requestURL != nil) {
-        if ([requestURL length] > 1) {
-            [alertController addAction:searchAction];
-        }
+                                               
+                                           }];
+            UIAlertAction *reloadAction = [UIAlertAction
+                                           actionWithTitle:@"Reload"
+                                           style:UIAlertActionStyleDefault
+                                           handler:^(UIAlertAction *action)
+                                           {
+                                               _inputViewVisible = NO;
+                                               [self.webview reload];
+                                           }];
+            UIAlertAction *newurlAction = [UIAlertAction
+                                           actionWithTitle:@"Enter a URL or Search"
+                                           style:UIAlertActionStyleDefault
+                                           handler:^(UIAlertAction *action)
+                                           {
+                                               _inputViewVisible = NO;
+                                               [self requestURLorSearchInput];
+                                           }];
+            UIAlertAction *cancelAction = [UIAlertAction
+                                           actionWithTitle:@"Dismiss"
+                                           style:UIAlertActionStyleCancel
+                                           handler:^(UIAlertAction *action)
+                                           {
+                                               _inputViewVisible = NO;
+                                           }];
+            if (requestURL != nil) {
+                if ([requestURL length] > 1) {
+                    [alertController addAction:searchAction];
+                }
+            }
+            if (_webview.request != nil) {
+                if (![_webview.request.URL.absoluteString  isEqual: @""]) {
+                    [alertController addAction:reloadAction];
+                }
+                else {
+                    [alertController addAction:newurlAction];
+                }
+            }
+            else {
+                [alertController addAction:newurlAction];
+            }
+            
+            [alertController addAction:cancelAction];
+            [self presentViewController:alertController animated:YES completion:nil];
     }
-    if (_webview.request != nil) {
-        if (![_webview.request.URL.absoluteString  isEqual: @""]) {
-            [alertController addAction:reloadAction];
-        }
-        else {
-            [alertController addAction:newurlAction];
-        }
-    }
-    else {
-        [alertController addAction:newurlAction];
-    }
-    
-    [alertController addAction:cancelAction];
-    [self presentViewController:alertController animated:YES completion:nil];
 }
 -(void)toggleMode
 {
@@ -529,7 +534,7 @@ typedef struct _Input
                 [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", temporaryURL]]]];
             }
             else {
-                [self requestURL];
+                [self requestURLorSearchInput];
             }
             temporaryURL = nil;
         }
@@ -545,7 +550,7 @@ typedef struct _Input
                 }
             }
             else {
-                [self requestURL];
+                [self requestURLorSearchInput];
             }
         }
      
@@ -566,10 +571,10 @@ typedef struct _Input
                 [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
             }
             if (_webview.request == nil) {
-                [self requestURL];
+                [self requestURLorSearchInput];
             }
             else if ([_webview.request.URL.absoluteString  isEqual: @""]) {
-                [self requestURL];
+                [self requestURLorSearchInput];
             }
         }
         else
@@ -577,7 +582,7 @@ typedef struct _Input
                 [self.webview goBack];
             }
             else {
-                [self requestURL];
+                [self requestURLorSearchInput];
             }
         
     }
@@ -709,14 +714,14 @@ typedef struct _Input
                 [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
             }
             if (_webview.request == nil) {
-                [self requestURL];
+                [self requestURLorSearchInput];
             }
             else if ([_webview.request.URL.absoluteString  isEqual: @""]) {
-                [self requestURL];
+                [self requestURLorSearchInput];
             }
         }
         else {
-           [self requestURL];
+           [self requestURLorSearchInput];
         }
         
         
