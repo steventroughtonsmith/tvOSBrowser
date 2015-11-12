@@ -47,13 +47,13 @@ typedef struct _Input
     [loadingSpinner stopAnimating];
     [self.view bringSubviewToFront:loadingSpinner];
     NSString *theTitle=[webView stringByEvaluatingJavaScriptFromString:@"document.title"];
-    NSString *currentURL = [webView stringByEvaluatingJavaScriptFromString:@"window.location"];
+    NSString *currentURL = webView.request.URL.absoluteString;
     NSArray *toSaveItem = [NSArray arrayWithObjects:currentURL, theTitle, nil];
     NSMutableArray *historyArray = [NSMutableArray arrayWithObjects:toSaveItem, nil];
     if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] != nil) {
         NSMutableArray *savedArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] mutableCopy];
         if ([savedArray count] > 0) {
-            if (savedArray[0][0] == currentURL) {
+            if ([savedArray[0][0] isEqualToString: currentURL]) {
                 [historyArray removeObjectAtIndex:0];
             }
         }
@@ -248,21 +248,23 @@ typedef struct _Input
                                                 for (int i = 0; i < [indexableArray count]; i++) {
                                                     NSString *objectTitle = indexableArray[i][1];
                                                     NSString *objectSubtitle = indexableArray[i][0];
-                                                    if ([[objectTitle stringByReplacingOccurrencesOfString:@" " withString:@""] isEqualToString: @""]) {
-                                                        objectTitle = nil;
+                                                    if (![[objectSubtitle stringByReplacingOccurrencesOfString:@" " withString:@""] isEqualToString: @""]) {
+                                                        if ([[objectTitle stringByReplacingOccurrencesOfString:@" " withString:@""] isEqualToString: @""]) {
+                                                            objectTitle = objectSubtitle;
+                                                        }
+                                                        else {
+                                                            objectTitle = [NSString stringWithFormat:@"%@ - %@",objectTitle,objectSubtitle ];
+                                                        }
+                                                        UIAlertAction *historyItem = [UIAlertAction
+                                                                                      actionWithTitle:objectTitle
+                                                                                      style:UIAlertActionStyleDefault
+                                                                                      handler:^(UIAlertAction *action)
+                                                                                      {
+                                                                                          _inputViewVisible = NO;
+                                                                                          [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString: indexableArray[i][0]]]];
+                                                                                      }];
+                                                        [historyAlertController addAction:historyItem];
                                                     }
-                                                    else {
-                                                        objectTitle = [NSString stringWithFormat:@"%@ - %@",objectTitle,objectSubtitle ];
-                                                    }
-                                                    UIAlertAction *historyItem = [UIAlertAction
-                                                                                  actionWithTitle:objectTitle
-                                                                                  style:UIAlertActionStyleDefault
-                                                                                  handler:^(UIAlertAction *action)
-                                                                                  {
-                                                                                      _inputViewVisible = NO;
-                                                                                      [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString: indexableArray[i][0]]]];
-                                                                                  }];
-                                                    [historyAlertController addAction:historyItem];
                                                 }
                                                 [historyAlertController addAction:cancelAction];
                                                 [self presentViewController:historyAlertController animated:YES completion:nil];
