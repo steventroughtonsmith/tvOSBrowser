@@ -18,7 +18,8 @@ Do this for Availability.h for both simulator and device if you want to run it o
 How to Use
 =============
 
-- Tap on the center of the touch area of the Apple TV Remote to switch between cursor & scroll mode.
+- Double press on the center of the touch area of the Apple TV Remote to switch between cursor & scroll mode.
 - Click the touch area to click.
 - Menu will navigate back.
-- The Play/Pause button will let you input URLs (no fuzzy matching or auto-search).
+- The Play/Pause button will let you input URLs and search.
+- Double tapping the Play/Pause button or the Menu button displays a menu that allows you to change user agent, reload the page, set/open homepage, clear cache, and clear cookies.
