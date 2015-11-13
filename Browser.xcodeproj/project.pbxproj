@@ -93,6 +93,7 @@
 				B002B85E1BAE420500C744AF /* Sources */,
 				B002B85F1BAE420500C744AF /* Frameworks */,
 				B002B8601BAE420500C744AF /* Resources */,
+				9693F8451BF5A99E00077BAB /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -114,6 +115,7 @@
 				TargetAttributes = {
 					B002B8611BAE420500C744AF = {
 						CreatedOnToolsVersion = 7.1;
+						DevelopmentTeam = NKQ4HJ66PX;
 					};
 				};
 			};
@@ -146,6 +148,22 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		9693F8451BF5A99E00077BAB /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 8;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+			shellPath = /bin/sh;
+			shellScript = "buildNumber=$(/usr/libexec/PlistBuddy -c \"Print CFBundleVersion\" \"${PROJECT_DIR}/${INFOPLIST_FILE}\")\nbuildNumber=$(($buildNumber + 1))\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $buildNumber\" \"${PROJECT_DIR}/${INFOPLIST_FILE}\"";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B002B85E1BAE420500C744AF /* Sources */ = {
@@ -263,8 +281,9 @@
 				FRAMEWORK_SEARCH_PATHS = "/System/Library/PrivateFrameworks/**";
 				INFOPLIST_FILE = Browser/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.highcaffeinecontent.Browser;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Moballo.tvbrowser;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TVOS_DEPLOYMENT_TARGET = 9.0;
 			};
 			name = Debug;
 		};
@@ -278,8 +297,9 @@
 				FRAMEWORK_SEARCH_PATHS = "/System/Library/PrivateFrameworks/**";
 				INFOPLIST_FILE = Browser/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.highcaffeinecontent.Browser;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Moballo.tvbrowser;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TVOS_DEPLOYMENT_TARGET = 9.0;
 			};
 			name = Release;
 		};
