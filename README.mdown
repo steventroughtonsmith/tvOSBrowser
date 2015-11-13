@@ -2,19 +2,6 @@ tvOS Browser
 =============
 
 Very simplistic browser for tvOS using private API (aka UIWebView).
-
-Installation
-=============
-
-#### Automatic
-
-Run the following commands in your terminal:
-```
-chmod +x availability-changer.sh
-sudo ./availability-changer.sh
-```
-
-#### Manual
 You'll need to redefine the following in Availability.h to build successfully.
 
 ```
