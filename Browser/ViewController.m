@@ -751,7 +751,7 @@ typedef struct _Input
             // Make the UIWebView method call
             NSString *fieldType = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).type;", (int)point.x, (int)point.y]];
             fieldType = fieldType.lowercaseString;
-            if ([fieldType isEqualToString:@"text"] || [fieldType isEqualToString:@"password"] || [fieldType isEqualToString:@"username"] || [fieldType isEqualToString:@"email"] || [fieldType isEqualToString:@"tel"] || [fieldType isEqualToString:@"zipcode"] || [fieldType isEqualToString:@"address"] || [fieldType isEqualToString:@"zip"] || [fieldType isEqualToString:@"phone"] || [fieldType isEqualToString:@"areacode"] || [fieldType isEqualToString:@"area"] || [fieldType isEqualToString:@"number"] || [fieldType isEqualToString:@"birthday"] || [fieldType isEqualToString:@"dob"] || [fieldType isEqualToString:@"date"] || [fieldType isEqualToString:@"time"] || [fieldType isEqualToString:@"pin"] || [fieldType isEqualToString:@"name"] || [fieldType isEqualToString:@"first"] || [fieldType isEqualToString:@"last"]) {
+            if ([fieldType isEqualToString:@"date"] || [fieldType isEqualToString:@"datetime"] || [fieldType isEqualToString:@"datetime-local"] || [fieldType isEqualToString:@"email"] || [fieldType isEqualToString:@"month"] || [fieldType isEqualToString:@"number"] || [fieldType isEqualToString:@"password"] || [fieldType isEqualToString:@"tel"] || [fieldType isEqualToString:@"text"] || [fieldType isEqualToString:@"time"] || [fieldType isEqualToString:@"url"] || [fieldType isEqualToString:@"week"]) {
                 _inputViewVisible = YES;
                 NSString *fieldTitle = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).title;", (int)point.x, (int)point.y]];
                 if ([fieldTitle isEqualToString:@""]) {
@@ -773,20 +773,20 @@ typedef struct _Input
                 
                 [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
                  {
-                     if ([fieldType isEqualToString:@"text"] || [fieldType isEqualToString:@"password"] || [fieldType isEqualToString:@"address"] || [fieldType isEqualToString:@"name"] || [fieldType isEqualToString:@"first"] || [fieldType isEqualToString:@"last"]) {
-                         textField.keyboardType = UIKeyboardTypeDefault;
+                     if ([fieldType isEqualToString:@"url"]) {
+                         textField.keyboardType = UIKeyboardTypeURL;
                      }
-                     else if ([fieldType isEqualToString:@"email"] || [fieldType isEqualToString:@"username"]) {
+                     else if ([fieldType isEqualToString:@"email"]) {
                          textField.keyboardType = UIKeyboardTypeEmailAddress;
                      }
-                     else if ([fieldType isEqualToString:@"tel"] || [fieldType isEqualToString:@"zipcode"] || [fieldType isEqualToString:@"zip"] || [fieldType isEqualToString:@"phone"] || [fieldType isEqualToString:@"areacode"] || [fieldType isEqualToString:@"dob"] || [fieldType isEqualToString:@"date"] || [fieldType isEqualToString:@"time"] || [fieldType isEqualToString:@"area"] || [fieldType isEqualToString:@"number"] || [fieldType isEqualToString:@"birthday"] || [fieldType isEqualToString:@"pin"]) {
+                     else if ([fieldType isEqualToString:@"tel"] || [fieldType isEqualToString:@"number"] || [fieldType isEqualToString:@"date"] || [fieldType isEqualToString:@"datetime"] || [fieldType isEqualToString:@"datetime-local"]) {
                          textField.keyboardType = UIKeyboardTypeNumbersAndPunctuation;
                      }
                      else {
                          textField.keyboardType = UIKeyboardTypeDefault;
                      }
                      textField.placeholder = [placeholder capitalizedString];
-                     if ([fieldType isEqualToString:@"password"] || [fieldType isEqualToString:@"pin"]) {
+                     if ([fieldType isEqualToString:@"password"]) {
                          textField.secureTextEntry = YES;
                      }
                      textField.text = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).value;", (int)point.x, (int)point.y]];
