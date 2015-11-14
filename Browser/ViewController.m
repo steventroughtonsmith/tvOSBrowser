@@ -30,6 +30,7 @@ typedef struct _Input
 @property (strong) CADisplayLink *link;
 @property (strong, nonatomic) GCController *controller;
 @property BOOL cursorMode;
+@property BOOL scrollViewAllowBounces;
 @property BOOL inputViewVisible;
 @property CGPoint lastTouchLocation;
 
@@ -91,6 +92,7 @@ typedef struct _Input
     }
 }
 -(void)viewDidLoad {
+    _scrollViewAllowBounces = NO;
     [super viewDidLoad];
     touchSurfaceDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleTouchSurfaceDoubleTap:)];
     touchSurfaceDoubleTapRecognizer.numberOfTapsRequired = 2;
@@ -108,7 +110,11 @@ typedef struct _Input
     cursorView.backgroundColor = [UIColor clearColor];
     cursorView.hidden = YES;
     
-    
+    /*
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
+    longPress.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause]];
+    [self.view addGestureRecognizer:longPress];
+    */
     self.webview = [[UIWebView alloc] initWithFrame:[UIScreen mainScreen].bounds];
     //[self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.google.com"]]];
     
@@ -116,7 +122,7 @@ typedef struct _Input
     [self.view addSubview:cursorView];
     
     self.webview.delegate = self;
-    self.webview.scrollView.bounces = YES;
+    self.webview.scrollView.bounces = _scrollViewAllowBounces;
     self.webview.scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
     loadingSpinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
     loadingSpinner.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
@@ -903,7 +909,14 @@ typedef struct _Input
         
     }
 }
-
+- (void)longPress:(UILongPressGestureRecognizer*)gesture {
+    if ( gesture.state == UIGestureRecognizerStateBegan) {
+        [self toggleMode];
+    }
+    else if ( gesture.state == UIGestureRecognizerStateEnded) {
+        //[self toggleMode];
+    }
+}
 
 #pragma mark - Cursor Input
 
