@@ -23,13 +23,15 @@ typedef struct _Input
     UIActivityIndicatorView *loadingSpinner;
     Input input;
     NSString *requestURL;
+    NSString *previousURL;
 }
 
 @property UIWebView *webview;
 @property (strong) CADisplayLink *link;
 @property (strong, nonatomic) GCController *controller;
 @property BOOL cursorMode;
-@property BOOL inputViewVisible;
+@property BOOL displayedHintsOnLaunch;
+@property BOOL scrollViewAllowBounces;
 @property CGPoint lastTouchLocation;
 
 
@@ -40,8 +42,11 @@ typedef struct _Input
     UITapGestureRecognizer *playPauseOrMenuDoubleTapRecognizer;
 }
 -(void) webViewDidStartLoad:(UIWebView *)webView {
-    [loadingSpinner startAnimating];
     //[self.view bringSubviewToFront:loadingSpinner];
+    if (![previousURL isEqualToString:requestURL]) {
+        [loadingSpinner startAnimating];
+    }
+    previousURL = requestURL;
 }
 -(void) webViewDidFinishLoad:(UIWebView *)webView {
     [loadingSpinner stopAnimating];
@@ -59,6 +64,9 @@ typedef struct _Input
         }
         [historyArray addObjectsFromArray:[[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"]];
     }
+    while ([historyArray count] > 100) {
+        [historyArray removeLastObject];
+    }
     NSArray *toStoreArray = historyArray;
     [[NSUserDefaults standardUserDefaults] setObject:toStoreArray forKey:@"HISTORY"];
     [[NSUserDefaults standardUserDefaults] synchronize];
@@ -74,6 +82,10 @@ typedef struct _Input
         //[self requestURLorSearchInput];
         [self loadHomePage];
     }
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DontShowHintsOnLaunch"] && !_displayedHintsOnLaunch) {
+        [self showHintsAlert];
+    }
+    _displayedHintsOnLaunch = YES;
 }
 -(void)loadHomePage {
     if ([[NSUserDefaults standardUserDefaults] stringForKey:@"homepage"] != nil) {
@@ -84,6 +96,7 @@ typedef struct _Input
     }
 }
 -(void)viewDidLoad {
+    _scrollViewAllowBounces = NO;
     [super viewDidLoad];
     touchSurfaceDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleTouchSurfaceDoubleTap:)];
     touchSurfaceDoubleTapRecognizer.numberOfTapsRequired = 2;
@@ -102,6 +115,10 @@ typedef struct _Input
     cursorView.hidden = YES;
     
     
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
+    longPress.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause]];
+    [self.view addGestureRecognizer:longPress];
+    
     self.webview = [[UIWebView alloc] initWithFrame:[UIScreen mainScreen].bounds];
     //[self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.google.com"]]];
     
@@ -109,7 +126,7 @@ typedef struct _Input
     [self.view addSubview:cursorView];
     
     self.webview.delegate = self;
-    self.webview.scrollView.bounces = YES;
+    self.webview.scrollView.bounces = _scrollViewAllowBounces;
     self.webview.scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
     loadingSpinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
     loadingSpinner.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
@@ -122,11 +139,11 @@ typedef struct _Input
     self.cursorMode = YES;
     self.webview.scrollView.scrollEnabled = NO;
     self.webview.userInteractionEnabled = NO;
+    self.webview.scalesPageToFit = NO;
     cursorView.hidden = NO;
 }
 -(void)handleDoubleTapMenuOrPlayPause:(UITapGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateEnded) {
-        _inputViewVisible = YES;
         UIAlertController *alertController = [UIAlertController
                                               alertControllerWithTitle:@"Menu"
                                               message:@""
@@ -136,7 +153,6 @@ typedef struct _Input
                                              style:UIAlertActionStyleDefault
                                              handler:^(UIAlertAction *action)
                                              {
-                                                 _inputViewVisible = NO;
                                                  [self loadHomePage];
                                              }];
         UIAlertAction *setHomePageAction = [UIAlertAction
@@ -144,7 +160,6 @@ typedef struct _Input
                                             style:UIAlertActionStyleDefault
                                             handler:^(UIAlertAction *action)
                                             {
-                                                _inputViewVisible = NO;
                                                 if (_webview.request != nil) {
                                                     if (![_webview.request.URL.absoluteString isEqual:@""]) {
                                                         [[NSUserDefaults standardUserDefaults] setObject:_webview.request.URL.absoluteString forKey:@"homepage"];
@@ -152,19 +167,24 @@ typedef struct _Input
                                                     }
                                                 }
                                             }];
+        UIAlertAction *showHintsAction = [UIAlertAction
+                                          actionWithTitle:@"Usage Guide"
+                                          style:UIAlertActionStyleDefault
+                                          handler:^(UIAlertAction *action)
+                                          {
+                                              [self showHintsAlert];
+                                          }];
         UIAlertAction *cancelAction = [UIAlertAction
                                        actionWithTitle:@"Cancel"
                                        style:UIAlertActionStyleCancel
                                        handler:^(UIAlertAction *action)
                                        {
-                                           _inputViewVisible = NO;
                                        }];
         UIAlertAction *viewFavoritesAction = [UIAlertAction
                                               actionWithTitle:@"Favorites"
                                               style:UIAlertActionStyleDefault
                                               handler:^(UIAlertAction *action)
                                               {
-                                                  _inputViewVisible = YES;
                                                   NSArray *indexableArray = [[NSUserDefaults standardUserDefaults] arrayForKey:@"FAVORITES"];
                                                   UIAlertController *historyAlertController = [UIAlertController
                                                                                                alertControllerWithTitle:@"Favorites"
@@ -175,7 +195,6 @@ typedef struct _Input
                                                                                         style:UIAlertActionStyleDestructive
                                                                                         handler:^(UIAlertAction *action)
                                                                                         {
-                                                                                            _inputViewVisible = YES;
                                                                                             NSArray *editingIndexableArray = [[NSUserDefaults standardUserDefaults] arrayForKey:@"FAVORITES"];
                                                                                             UIAlertController *editHistoryAlertController = [UIAlertController
                                                                                                                                              alertControllerWithTitle:@"Delete a Favorite"
@@ -194,7 +213,6 @@ typedef struct _Input
                                                                                                                                        style:UIAlertActionStyleDefault
                                                                                                                                        handler:^(UIAlertAction *action)
                                                                                                                                        {
-                                                                                                                                           _inputViewVisible = NO;
                                                                                                                                            NSMutableArray *editingArray = [editingIndexableArray mutableCopy];
                                                                                                                                            [editingArray removeObjectAtIndex:i];
                                                                                                                                            NSArray *toStoreArray = editingArray;
@@ -214,7 +232,6 @@ typedef struct _Input
                                                                                          style:UIAlertActionStyleDefault
                                                                                          handler:^(UIAlertAction *action)
                                                                                          {
-                                                                                             _inputViewVisible = YES;
                                                                                              NSString *theTitle=[_webview stringByEvaluatingJavaScriptFromString:@"document.title"];
                                                                                              NSString *currentURL = _webview.request.URL.absoluteString;
                                                                                              UIAlertController *favoritesAddToController = [UIAlertController
@@ -241,7 +258,6 @@ typedef struct _Input
                                                                                                                           style:UIAlertActionStyleDestructive
                                                                                                                           handler:^(UIAlertAction *action)
                                                                                                                           {
-                                                                                                                              _inputViewVisible = NO;
                                                                                                                               UITextField *urltextfield = favoritesAddToController.textFields[0];
                                                                                                                               NSString *toMod = urltextfield.text;
                                                                                                                               if ([toMod isEqualToString:@""]) {
@@ -250,7 +266,8 @@ typedef struct _Input
                                                                                                                               NSArray *toSaveItem = [NSArray arrayWithObjects:currentURL, theTitle, nil];
                                                                                                                               NSMutableArray *historyArray = [NSMutableArray arrayWithObjects:toSaveItem, nil];
                                                                                                                               if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"FAVORITES"] != nil) {
-                                                                                                                                  [historyArray addObjectsFromArray:[[NSUserDefaults standardUserDefaults] arrayForKey:@"FAVORITES"]];
+                                                                                                                                  historyArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:@"FAVORITES"] mutableCopy];
+                                                                                                                                  [historyArray addObject:toSaveItem];
                                                                                                                               }
                                                                                                                               NSArray *toStoreArray = historyArray;
                                                                                                                               [[NSUserDefaults standardUserDefaults] setObject:toStoreArray forKey:@"FAVORITES"];
@@ -277,7 +294,6 @@ typedef struct _Input
                                                                                              style:UIAlertActionStyleDefault
                                                                                              handler:^(UIAlertAction *action)
                                                                                              {
-                                                                                                 _inputViewVisible = NO;
                                                                                                  [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString: indexableArray[i][0]]]];
                                                                                              }];
                                                               [historyAlertController addAction:favoriteItem];
@@ -298,7 +314,6 @@ typedef struct _Input
                                             style:UIAlertActionStyleDefault
                                             handler:^(UIAlertAction *action)
                                             {
-                                                _inputViewVisible = NO;
                                                 NSArray *indexableArray = [[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"];
                                                 UIAlertController *historyAlertController = [UIAlertController
                                                                                              alertControllerWithTitle:@"History"
@@ -309,7 +324,6 @@ typedef struct _Input
                                                                                      style:UIAlertActionStyleDestructive
                                                                                      handler:^(UIAlertAction *action)
                                                                                      {
-                                                                                         _inputViewVisible = NO;
                                                                                          [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"HISTORY"];
                                                                                          [[NSUserDefaults standardUserDefaults] synchronize];
                                                                                          
@@ -332,7 +346,6 @@ typedef struct _Input
                                                                                       style:UIAlertActionStyleDefault
                                                                                       handler:^(UIAlertAction *action)
                                                                                       {
-                                                                                          _inputViewVisible = NO;
                                                                                           [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString: indexableArray[i][0]]]];
                                                                                       }];
                                                         [historyAlertController addAction:historyItem];
@@ -346,7 +359,6 @@ typedef struct _Input
                                            style:UIAlertActionStyleDefault
                                            handler:^(UIAlertAction *action)
                                            {
-                                               _inputViewVisible = NO;
                                                NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:@"Mozilla/5.0 (iPad; CPU OS 9_1 like Mac OS X) AppleWebKit/601.2.7 (KHTML, like Gecko) Version/9.0 Mobile/12B410 Safari/601.2.7", @"UserAgent", nil];
                                                [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MobileMode"];
@@ -365,7 +377,6 @@ typedef struct _Input
                                             style:UIAlertActionStyleDefault
                                             handler:^(UIAlertAction *action)
                                             {
-                                                _inputViewVisible = NO;
                                                 NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:@"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/601.2.7 (KHTML, like Gecko) Version/9.0.1 Safari/601.2.7", @"UserAgent", nil];
                                                 [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                                 [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MobileMode"];
@@ -383,9 +394,9 @@ typedef struct _Input
                                            style:UIAlertActionStyleDestructive
                                            handler:^(UIAlertAction *action)
                                            {
-                                               _inputViewVisible = NO;
                                                [[NSURLCache sharedURLCache] removeAllCachedResponses];
                                                [[NSUserDefaults standardUserDefaults] synchronize];
+                                               previousURL = @"";
                                                [self.webview reload];
                                                
                                            }];
@@ -394,12 +405,12 @@ typedef struct _Input
                                              style:UIAlertActionStyleDestructive
                                              handler:^(UIAlertAction *action)
                                              {
-                                                 _inputViewVisible = NO;
                                                  NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
                                                  for (NSHTTPCookie *cookie in [storage cookies]) {
                                                      [storage deleteCookie:cookie];
                                                  }
                                                  [[NSUserDefaults standardUserDefaults] synchronize];
+                                                 previousURL = @"";
                                                  [self.webview reload];
                                                  
                                              }];
@@ -411,6 +422,7 @@ typedef struct _Input
          handler:^(UIAlertAction *action)
          {
          _inputViewVisible = NO;
+         previousURL = @"";
          [self.webview reload];
          }];
          if (_webview.request != nil) {
@@ -432,6 +444,7 @@ typedef struct _Input
         }
         [alertController addAction:clearCacheAction];
         [alertController addAction:clearCookiesAction];
+        [alertController addAction:showHintsAction];
         [alertController addAction:cancelAction];
         [self presentViewController:alertController animated:YES completion:nil];
     }
@@ -443,7 +456,6 @@ typedef struct _Input
 }
 -(void)requestURLorSearchInput
 {
-    _inputViewVisible = YES;
     UIAlertController *alertController = [UIAlertController
                                           alertControllerWithTitle:@"Enter URL or Search Terms"
                                           message:@""
@@ -467,7 +479,6 @@ typedef struct _Input
                                style:UIAlertActionStyleDefault
                                handler:^(UIAlertAction *action)
                                {
-                                   _inputViewVisible = NO;
                                    UITextField *urltextfield = alertController.textFields[0];
                                    NSString *toMod = urltextfield.text;
                                    /*
@@ -506,7 +517,6 @@ typedef struct _Input
                                    style:UIAlertActionStyleDefault
                                    handler:^(UIAlertAction *action)
                                    {
-                                       _inputViewVisible = NO;
                                        UITextField *urltextfield = alertController.textFields[0];
                                        NSString *toMod = urltextfield.text;
                                        toMod = [toMod stringByReplacingOccurrencesOfString:@" " withString:@"+"];
@@ -528,7 +538,7 @@ typedef struct _Input
                                    style:UIAlertActionStyleDefault
                                    handler:^(UIAlertAction *action)
                                    {
-                                       _inputViewVisible = NO;
+                                       previousURL = @"";
                                        [self.webview reload];
                                    }];
     
@@ -537,7 +547,6 @@ typedef struct _Input
                                    style:UIAlertActionStyleCancel
                                    handler:^(UIAlertAction *action)
                                    {
-                                       _inputViewVisible = NO;
                                    }];
     [alertController addAction:searchAction];
     [alertController addAction:goAction];
@@ -564,79 +573,72 @@ typedef struct _Input
 }
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
     [loadingSpinner stopAnimating];
-    switch (error.code) {
-        case (-999, 204):
-            return;
-        default:
-            _inputViewVisible = YES;
-            UIAlertController *alertController = [UIAlertController
-                                                  alertControllerWithTitle:@"Could Not Load Webpage"
-                                                  message:[error localizedDescription]
-                                                  preferredStyle:UIAlertControllerStyleAlert];
-            
-            UIAlertAction *searchAction = [UIAlertAction
-                                           actionWithTitle:@"Google This Page"
-                                           style:UIAlertActionStyleDefault
-                                           handler:^(UIAlertAction *action)
-                                           {
-                                               _inputViewVisible = NO;
-                                               if (requestURL != nil) {
-                                                   if ([requestURL length] > 1) {
-                                                       NSString *lastChar = [requestURL substringFromIndex: [requestURL length] - 1];
-                                                       if ([lastChar isEqualToString:@"/"]) {
-                                                           NSString *newString = [requestURL substringToIndex:[requestURL length]-1];
-                                                           requestURL = newString;
-                                                       }
+    if (![[NSString stringWithFormat:@"%lid", (long)error.code] containsString:@"999"] && ![[NSString stringWithFormat:@"%lid", (long)error.code] containsString:@"204"]) {
+        UIAlertController *alertController = [UIAlertController
+                                              alertControllerWithTitle:@"Could Not Load Webpage"
+                                              message:[error localizedDescription]
+                                              preferredStyle:UIAlertControllerStyleAlert];
+        
+        UIAlertAction *searchAction = [UIAlertAction
+                                       actionWithTitle:@"Google This Page"
+                                       style:UIAlertActionStyleDefault
+                                       handler:^(UIAlertAction *action)
+                                       {
+                                           if (requestURL != nil) {
+                                               if ([requestURL length] > 1) {
+                                                   NSString *lastChar = [requestURL substringFromIndex: [requestURL length] - 1];
+                                                   if ([lastChar isEqualToString:@"/"]) {
+                                                       NSString *newString = [requestURL substringToIndex:[requestURL length]-1];
+                                                       requestURL = newString;
                                                    }
-                                                   requestURL = [requestURL stringByReplacingOccurrencesOfString:@"http://" withString:@""];
-                                                   requestURL = [requestURL stringByReplacingOccurrencesOfString:@"https://" withString:@""];
-                                                   requestURL = [requestURL stringByReplacingOccurrencesOfString:@"www." withString:@""];
-                                                   [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", requestURL]]]];
                                                }
-                                               
-                                           }];
-            UIAlertAction *reloadAction = [UIAlertAction
-                                           actionWithTitle:@"Reload Page"
-                                           style:UIAlertActionStyleDefault
-                                           handler:^(UIAlertAction *action)
-                                           {
-                                               _inputViewVisible = NO;
-                                               [self.webview reload];
-                                           }];
-            UIAlertAction *newurlAction = [UIAlertAction
-                                           actionWithTitle:@"Enter a URL or Search"
-                                           style:UIAlertActionStyleDefault
-                                           handler:^(UIAlertAction *action)
-                                           {
-                                               _inputViewVisible = NO;
-                                               [self requestURLorSearchInput];
-                                           }];
-            UIAlertAction *cancelAction = [UIAlertAction
-                                           actionWithTitle:@"Dismiss"
-                                           style:UIAlertActionStyleCancel
-                                           handler:^(UIAlertAction *action)
-                                           {
-                                               _inputViewVisible = NO;
-                                           }];
-            if (requestURL != nil) {
-                if ([requestURL length] > 1) {
-                    [alertController addAction:searchAction];
-                }
+                                               requestURL = [requestURL stringByReplacingOccurrencesOfString:@"http://" withString:@""];
+                                               requestURL = [requestURL stringByReplacingOccurrencesOfString:@"https://" withString:@""];
+                                               requestURL = [requestURL stringByReplacingOccurrencesOfString:@"www." withString:@""];
+                                               [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", requestURL]]]];
+                                           }
+                                           
+                                       }];
+        UIAlertAction *reloadAction = [UIAlertAction
+                                       actionWithTitle:@"Reload Page"
+                                       style:UIAlertActionStyleDefault
+                                       handler:^(UIAlertAction *action)
+                                       {
+                                           previousURL = @"";
+                                           [self.webview reload];
+                                       }];
+        UIAlertAction *newurlAction = [UIAlertAction
+                                       actionWithTitle:@"Enter a URL or Search"
+                                       style:UIAlertActionStyleDefault
+                                       handler:^(UIAlertAction *action)
+                                       {
+                                           [self requestURLorSearchInput];
+                                       }];
+        UIAlertAction *cancelAction = [UIAlertAction
+                                       actionWithTitle:@"Dismiss"
+                                       style:UIAlertActionStyleCancel
+                                       handler:^(UIAlertAction *action)
+                                       {
+                                       }];
+        if (requestURL != nil) {
+            if ([requestURL length] > 1) {
+                [alertController addAction:searchAction];
             }
-            if (_webview.request != nil) {
-                if (![_webview.request.URL.absoluteString  isEqual: @""]) {
-                    [alertController addAction:reloadAction];
-                }
-                else {
-                    [alertController addAction:newurlAction];
-                }
+        }
+        if (_webview.request != nil) {
+            if (![_webview.request.URL.absoluteString  isEqual: @""]) {
+                [alertController addAction:reloadAction];
             }
             else {
                 [alertController addAction:newurlAction];
             }
-            
-            [alertController addAction:cancelAction];
-            [self presentViewController:alertController animated:YES completion:nil];
+        }
+        else {
+            [alertController addAction:newurlAction];
+        }
+        
+        [alertController addAction:cancelAction];
+        [self presentViewController:alertController animated:YES completion:nil];
     }
 }
 -(void)toggleMode
@@ -655,6 +657,46 @@ typedef struct _Input
         self.webview.userInteractionEnabled = YES;
         cursorView.hidden = YES;
     }
+}
+- (void)showHintsAlert
+{
+    UIAlertController *alertController = [UIAlertController
+                                          alertControllerWithTitle:@"Usage Guide"
+                                          message:@"Double press the touch area to switch between cursor & scroll mode.\nPress the touch area while in cursor mode to click.\nPress the Menu button to navigate back.\nPress the Play/Pause button for a URL bar.\nDouble tap the Play/Pause button or Menu button for more options."
+                                          preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction *hideForeverAction = [UIAlertAction
+                                        actionWithTitle:@"Don't Show This Again"
+                                        style:UIAlertActionStyleDestructive
+                                        handler:^(UIAlertAction *action)
+                                        {
+                                            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"DontShowHintsOnLaunch"];
+                                            [[NSUserDefaults standardUserDefaults] synchronize];
+                                        }];
+    UIAlertAction *showForeverAction = [UIAlertAction
+                                        actionWithTitle:@"Always Show On Launch"
+                                        style:UIAlertActionStyleDestructive
+                                        handler:^(UIAlertAction *action)
+                                        {
+                                            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"DontShowHintsOnLaunch"];
+                                            [[NSUserDefaults standardUserDefaults] synchronize];
+                                        }];
+    UIAlertAction *cancelAction = [UIAlertAction
+                                   actionWithTitle:@"Dismiss"
+                                   style:UIAlertActionStyleCancel
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                   }];
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DontShowHintsOnLaunch"]) {
+        [alertController addAction:showForeverAction];
+    }
+    else {
+        [alertController addAction:hideForeverAction];
+    }
+    [alertController addAction:cancelAction];
+    [self presentViewController:alertController animated:YES completion:nil];
+    
+    
 }
 - (void)alertTextFieldShouldReturn:(UITextField *)sender
 {
@@ -703,35 +745,24 @@ typedef struct _Input
     
     if (presses.anyObject.type == UIPressTypeMenu)
     {
-        if (_inputViewVisible)
+        UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
+        if (alertController)
         {
-            _inputViewVisible = NO;
-            UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
-            if (alertController)
-            {
-                [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
-            }
-            if (_webview.request == nil) {
-                [self requestURLorSearchInput];
-            }
-            else if ([_webview.request.URL.absoluteString  isEqual: @""]) {
-                [self requestURLorSearchInput];
-            }
+            [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
         }
-        else
-            if ([self.webview canGoBack]) {
-                [self.webview goBack];
-            }
-            else {
-                [self requestURLorSearchInput];
-            }
+        else if ([self.webview canGoBack]) {
+            [self.webview goBack];
+        }
+        else {
+            [self requestURLorSearchInput];
+        }
         
     }
     else if (presses.anyObject.type == UIPressTypeUpArrow)
     {
         // Zoom testing (needs work) (requires old remote for up arrow)
-        UIScrollView * sv = self.webview.scrollView;
-        [sv setZoomScale:30];
+        //UIScrollView * sv = self.webview.scrollView;
+        //[sv setZoomScale:30];
     }
     else if (presses.anyObject.type == UIPressTypeDownArrow)
     {
@@ -750,9 +781,25 @@ typedef struct _Input
             [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).click()", (int)point.x, (int)point.y]];
             // Make the UIWebView method call
             NSString *fieldType = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).type;", (int)point.x, (int)point.y]];
+            /*
+             if (fieldType == nil) {
+             NSString *contentEditible = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).getAttribute('contenteditable');", (int)point.x, (int)point.y]];
+             NSLog(contentEditible);
+             if ([contentEditible isEqualToString:@"true"]) {
+             fieldType = @"text";
+             }
+             }
+             else if ([[fieldType stringByReplacingOccurrencesOfString:@" " withString:@""] isEqualToString: @""]) {
+             NSString *contentEditible = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).getAttribute('contenteditable');", (int)point.x, (int)point.y]];
+             NSLog(contentEditible);
+             if ([contentEditible isEqualToString:@"true"]) {
+             fieldType = @"text";
+             }
+             }
+             NSLog(fieldType);
+             */
             fieldType = fieldType.lowercaseString;
             if ([fieldType isEqualToString:@"date"] || [fieldType isEqualToString:@"datetime"] || [fieldType isEqualToString:@"datetime-local"] || [fieldType isEqualToString:@"email"] || [fieldType isEqualToString:@"month"] || [fieldType isEqualToString:@"number"] || [fieldType isEqualToString:@"password"] || [fieldType isEqualToString:@"tel"] || [fieldType isEqualToString:@"text"] || [fieldType isEqualToString:@"time"] || [fieldType isEqualToString:@"url"] || [fieldType isEqualToString:@"week"]) {
-                _inputViewVisible = YES;
                 NSString *fieldTitle = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).title;", (int)point.x, (int)point.y]];
                 if ([fieldTitle isEqualToString:@""]) {
                     fieldTitle = fieldType;
@@ -766,6 +813,7 @@ typedef struct _Input
                         placeholder = @"Text Input";
                     }
                 }
+                NSString *testedFormResponse = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).form.hasAttribute('onsubmit');", (int)point.x, (int)point.y]];
                 UIAlertController *alertController = [UIAlertController
                                                       alertControllerWithTitle:@"Input Text"
                                                       message: [fieldTitle capitalizedString]
@@ -804,13 +852,13 @@ typedef struct _Input
                                                        handler:^(UIAlertAction *action)
                                                        {
                                                            UITextField *inputViewTextField = alertController.textFields[0];
-                                                           _inputViewVisible = NO;
                                                            NSString *javaScript = [NSString stringWithFormat:@"var textField = document.elementFromPoint(%i, %i);"
                                                                                    "textField.value = '%@';"
                                                                                    "textField.form.submit();"
-                                                                                   "var ev = document.createEvent('KeyboardEvent');"
-                                                                                   "ev.initKeyEvent('keydown', true, true, window, false, false, false, false, 13, 0);"
-                                                                                   "document.body.dispatchEvent(ev);", (int)point.x, (int)point.y, inputViewTextField.text];
+                                                                                   //"var ev = document.createEvent('KeyboardEvent');"
+                                                                                   //"ev.initKeyEvent('keydown', true, true, window, false, false, false, false, 13, 0);"
+                                                                                   //"document.body.dispatchEvent(ev);"
+                                                                                   , (int)point.x, (int)point.y, inputViewTextField.text];
                                                            [_webview stringByEvaluatingJavaScriptFromString:javaScript];
                                                        }];
                 UIAlertAction *inputAction = [UIAlertAction
@@ -819,7 +867,6 @@ typedef struct _Input
                                               handler:^(UIAlertAction *action)
                                               {
                                                   UITextField *inputViewTextField = alertController.textFields[0];
-                                                  _inputViewVisible = NO;
                                                   NSString *javaScript = [NSString stringWithFormat:@"var textField = document.elementFromPoint(%i, %i);"
                                                                           "textField.value = '%@';", (int)point.x, (int)point.y, inputViewTextField.text];
                                                   [_webview stringByEvaluatingJavaScriptFromString:javaScript];
@@ -829,10 +876,13 @@ typedef struct _Input
                                                style:UIAlertActionStyleCancel
                                                handler:^(UIAlertAction *action)
                                                {
-                                                   _inputViewVisible = NO;
                                                }];
                 [alertController addAction:inputAction];
-                [alertController addAction:inputAndSubmitAction];
+                if (testedFormResponse != nil) {
+                    if ([testedFormResponse isEqualToString:@"true"]) {
+                        [alertController addAction:inputAndSubmitAction];
+                    }
+                }
                 [alertController addAction:cancelAction];
                 [self presentViewController:alertController animated:YES completion:nil];
                 UITextField *inputViewTextField = alertController.textFields[0];
@@ -849,28 +899,34 @@ typedef struct _Input
     
     else if (presses.anyObject.type == UIPressTypePlayPause)
     {
-        if (_inputViewVisible) {
-            _inputViewVisible = NO;
-            UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
-            if (alertController)
-            {
-                [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
-            }
-            if (_webview.request == nil) {
-                [self requestURLorSearchInput];
-            }
-            else if ([_webview.request.URL.absoluteString  isEqual: @""]) {
-                [self requestURLorSearchInput];
-            }
+        UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
+        if (alertController)
+        {
+            [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
         }
         else {
             [self requestURLorSearchInput];
         }
-        
-        
     }
 }
-
+- (void)longPress:(UILongPressGestureRecognizer*)gesture {
+    if ( gesture.state == UIGestureRecognizerStateBegan) {
+        //[self toggleMode];
+        /*
+         //if ([_webview.scrollView zoomScale] != 1.0) {
+         if (![[_webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom;"]  isEqual: @"1.0"]) {
+         [_webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom = 1.0;"];
+         }
+         else {
+         [_webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom = 5.0;"];
+         }
+         */
+        
+    }
+    else if ( gesture.state == UIGestureRecognizerStateEnded) {
+        //[self toggleMode];
+    }
+}
 
 #pragma mark - Cursor Input
 
