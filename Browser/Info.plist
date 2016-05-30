@@ -35,5 +35,7 @@
 	<array>
 		<string>arm64</string>
 	</array>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
 </dict>
 </plist>
