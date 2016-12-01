@@ -33,7 +33,7 @@ typedef struct _Input
 @property BOOL displayedHintsOnLaunch;
 @property BOOL scrollViewAllowBounces;
 @property CGPoint lastTouchLocation;
-
+@property NSUInteger textFontSize;
 
 @end
 
@@ -141,6 +141,7 @@ typedef struct _Input
     self.webview.userInteractionEnabled = NO;
     self.webview.scalesPageToFit = NO;
     cursorView.hidden = NO;
+    self.textFontSize = 100;
 }
 -(void)handleDoubleTapMenuOrPlayPause:(UITapGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateEnded) {
@@ -415,6 +416,43 @@ typedef struct _Input
                                                  
                                              }];
         
+        UIAlertAction *increaseFontSizeAction = [UIAlertAction
+                                             actionWithTitle:@"Increase Font Size"
+                                             style:UIAlertActionStyleDefault
+                                             handler:^(UIAlertAction *action)
+                                             {
+                                                 self.textFontSize = (self.textFontSize < 160) ? self.textFontSize +5 : self.textFontSize;
+                                                 
+                                                 NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
+                                                                       (unsigned long)self.textFontSize];
+                                                 [self.webview stringByEvaluatingJavaScriptFromString:jsString];
+                                             }];
+        
+        UIAlertAction *decreaseFontSizeAction = [UIAlertAction
+                                                 actionWithTitle:@"Decrease Font Size"
+                                                 style:UIAlertActionStyleDefault
+                                                 handler:^(UIAlertAction *action)
+                                                 {
+                                                     self.textFontSize = (self.textFontSize > 50) ? self.textFontSize -5 : self.textFontSize;
+                                                     
+                                                     NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
+                                                                           (unsigned long)self.textFontSize];
+                                                     [self.webview stringByEvaluatingJavaScriptFromString:jsString];
+                                                 }];
+        
+        UIAlertAction *scalePageToFitAction = [UIAlertAction
+                                                 actionWithTitle:@"Scale Page to Fit"
+                                                 style:UIAlertActionStyleDefault
+                                                 handler:^(UIAlertAction *action)
+                                                 {
+                                                     if (self.webview.scalesPageToFit) {
+                                                         self.webview.scalesPageToFit = NO;
+                                                     } else {
+                                                         self.webview.scalesPageToFit = YES;
+                                                         self.webview.contentMode = UIViewContentModeScaleAspectFit;
+                                                     }
+                                                     [self.webview reload];
+                                                 }];
         /*
          UIAlertAction *reloadAction = [UIAlertAction
          actionWithTitle:@"Reload Page"
@@ -445,6 +483,9 @@ typedef struct _Input
         [alertController addAction:clearCacheAction];
         [alertController addAction:clearCookiesAction];
         [alertController addAction:showHintsAction];
+        [alertController addAction:increaseFontSizeAction];
+        [alertController addAction:decreaseFontSizeAction];
+        [alertController addAction:scalePageToFitAction];
         [alertController addAction:cancelAction];
         [self presentViewController:alertController animated:YES completion:nil];
     }
