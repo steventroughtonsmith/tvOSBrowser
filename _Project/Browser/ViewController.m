@@ -73,6 +73,10 @@ typedef struct _Input
 }
 -(void)viewDidAppear:(BOOL)animated {
     loadingSpinner.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
+    [self webViewDidAppear];
+    _displayedHintsOnLaunch = YES;
+}
+-(void)webViewDidAppear {
     if ([[NSUserDefaults standardUserDefaults] stringForKey:@"savedURLtoReopen"] != nil) {
         [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[[NSUserDefaults standardUserDefaults] stringForKey:@"savedURLtoReopen"]]]];
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"savedURLtoReopen"];
@@ -85,7 +89,6 @@ typedef struct _Input
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DontShowHintsOnLaunch"] && !_displayedHintsOnLaunch) {
         [self showHintsAlert];
     }
-    _displayedHintsOnLaunch = YES;
 }
 -(void)loadHomePage {
     if ([[NSUserDefaults standardUserDefaults] stringForKey:@"homepage"] != nil) {
@@ -95,7 +98,24 @@ typedef struct _Input
         [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString: @"http://www.google.com"]]];
     }
 }
+-(void)initWebView {
+    self.webview = [[UIWebView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    //[self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.google.com"]]];
+    
+    [self.view addSubview:self.webview];
+    self.webview.delegate = self;
+    self.webview.scrollView.bounces = _scrollViewAllowBounces;
+    self.webview.scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
+    self.webview.scrollView.scrollEnabled = NO;
+    self.webview.userInteractionEnabled = NO;
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"ScalePagesToFit"]) {
+        self.webview.scalesPageToFit = YES;
+    } else {
+        self.webview.scalesPageToFit = NO;
+    }
+}
 -(void)viewDidLoad {
+    [self initWebView];
     _scrollViewAllowBounces = NO;
     [super viewDidLoad];
     touchSurfaceDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleTouchSurfaceDoubleTap:)];
@@ -119,15 +139,11 @@ typedef struct _Input
     longPress.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause]];
     [self.view addGestureRecognizer:longPress];
     
-    self.webview = [[UIWebView alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    //[self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.google.com"]]];
     
-    [self.view addSubview:self.webview];
     [self.view addSubview:cursorView];
     
-    self.webview.delegate = self;
-    self.webview.scrollView.bounces = _scrollViewAllowBounces;
-    self.webview.scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
+    
+    
     loadingSpinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
     loadingSpinner.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
     loadingSpinner.tintColor = [UIColor blackColor];
@@ -137,9 +153,6 @@ typedef struct _Input
     [self.view bringSubviewToFront:loadingSpinner];
     //ENABLE CURSOR MODE INITIALLY
     self.cursorMode = YES;
-    self.webview.scrollView.scrollEnabled = NO;
-    self.webview.userInteractionEnabled = NO;
-    self.webview.scalesPageToFit = NO;
     cursorView.hidden = NO;
     self.textFontSize = 100;
 }
@@ -360,36 +373,113 @@ typedef struct _Input
                                            style:UIAlertActionStyleDefault
                                            handler:^(UIAlertAction *action)
                                            {
-                                               NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:@"Mozilla/5.0 (iPad; CPU OS 9_1 like Mac OS X) AppleWebKit/601.2.7 (KHTML, like Gecko) Version/9.0 Mobile/12B410 Safari/601.2.7", @"UserAgent", nil];
+                                               NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:@"Mozilla/5.0 (iPad; CPU OS 10_0 like Mac OS X) AppleWebKit/602.1.38 (KHTML, like Gecko) Version/10.0 Mobile/14A300 Safari/602.1", @"UserAgent", nil];
                                                [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MobileMode"];
                                                [[NSUserDefaults standardUserDefaults] synchronize];
+                                               
                                                if (_webview.request != nil) {
                                                    if (![_webview.request.URL.absoluteString isEqual:@""]) {
                                                        [[NSUserDefaults standardUserDefaults] setObject:_webview.request.URL.absoluteString forKey:@"savedURLtoReopen"];
                                                        [[NSUserDefaults standardUserDefaults] synchronize];
                                                    }
                                                }
-                                               exit(0);
-                                               
+                                               NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+                                               for (NSHTTPCookie *cookie in [storage cookies]) {
+                                                   [storage deleteCookie:cookie];
+                                               }
+                                               [[NSURLCache sharedURLCache] removeAllCachedResponses];
+                                               [[NSUserDefaults standardUserDefaults] synchronize];
+                                               [[NSURLSession sharedSession] resetWithCompletionHandler:^{
+                                                   dispatch_sync(dispatch_get_main_queue(), ^{
+                                                       [self.webview removeFromSuperview];
+                                                       [self initWebView];
+                                                       [self.view bringSubviewToFront:cursorView];
+                                                       [self.view bringSubviewToFront:loadingSpinner];
+                                                       [self webViewDidAppear];
+                                                       
+                                                   });
+                                               }];
                                            }];
         UIAlertAction *desktopModeAction = [UIAlertAction
                                             actionWithTitle:@"Switch To Desktop Mode"
                                             style:UIAlertActionStyleDefault
                                             handler:^(UIAlertAction *action)
                                             {
-                                                NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:@"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/601.2.7 (KHTML, like Gecko) Version/9.0.1 Safari/601.2.7", @"UserAgent", nil];
+                                                NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:@"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/602.3.12 (KHTML, like Gecko) Version/10.0.2 Safari/602.3.12", @"UserAgent", nil];
                                                 [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                                 [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MobileMode"];
                                                 [[NSUserDefaults standardUserDefaults] synchronize];
+                                                
                                                 if (_webview.request != nil) {
                                                     if (![_webview.request.URL.absoluteString isEqual:@""]) {
                                                         [[NSUserDefaults standardUserDefaults] setObject:_webview.request.URL.absoluteString forKey:@"savedURLtoReopen"];
                                                         [[NSUserDefaults standardUserDefaults] synchronize];
                                                     }
                                                 }
-                                                exit(0);
+                                                NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+                                                for (NSHTTPCookie *cookie in [storage cookies]) {
+                                                    [storage deleteCookie:cookie];
+                                                }
+                                                [[NSURLCache sharedURLCache] removeAllCachedResponses];
+                                                [[NSUserDefaults standardUserDefaults] synchronize];
+                                                [[NSURLSession sharedSession] resetWithCompletionHandler:^{
+                                                    dispatch_sync(dispatch_get_main_queue(), ^{
+                                                        [self.webview removeFromSuperview];
+                                                        [self initWebView];
+                                                        [self.view bringSubviewToFront:cursorView];
+                                                        [self.view bringSubviewToFront:loadingSpinner];
+                                                        [self webViewDidAppear];
+                                                        
+                                                    });
+                                                }];
                                             }];
+        UIAlertAction *scalePageToFitAction = [UIAlertAction
+                                               actionWithTitle:@"Scale Pages to Fit"
+                                               style:UIAlertActionStyleDefault
+                                               handler:^(UIAlertAction *action)
+                                               {
+                                                   [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"ScalePagesToFit"];
+                                                   [[NSUserDefaults standardUserDefaults] synchronize];
+                                                   self.webview.scalesPageToFit = YES;
+                                                   self.webview.contentMode = UIViewContentModeScaleAspectFit;
+                                                   [self.webview reload];
+                                               }];
+        UIAlertAction *stopScalePageToFitAction = [UIAlertAction
+                                                   actionWithTitle:@"Stop Scaling Pages to Fit"
+                                                   style:UIAlertActionStyleDefault
+                                                   handler:^(UIAlertAction *action)
+                                                   {
+                                                       [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"ScalePagesToFit"];
+                                                       [[NSUserDefaults standardUserDefaults] synchronize];
+                                                       self.webview.scalesPageToFit = NO;
+                                                       [self.webview reload];
+                                                   }];
+        
+        UIAlertAction *increaseFontSizeAction = [UIAlertAction
+                                                 actionWithTitle:@"Increase Font Size"
+                                                 style:UIAlertActionStyleDefault
+                                                 handler:^(UIAlertAction *action)
+                                                 {
+                                                     self.textFontSize = (self.textFontSize < 160) ? self.textFontSize +5 : self.textFontSize;
+                                                     
+                                                     NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
+                                                                           (unsigned long)self.textFontSize];
+                                                     [self.webview stringByEvaluatingJavaScriptFromString:jsString];
+                                                 }];
+        
+        UIAlertAction *decreaseFontSizeAction = [UIAlertAction
+                                                 actionWithTitle:@"Decrease Font Size"
+                                                 style:UIAlertActionStyleDefault
+                                                 handler:^(UIAlertAction *action)
+                                                 {
+                                                     self.textFontSize = (self.textFontSize > 50) ? self.textFontSize -5 : self.textFontSize;
+                                                     
+                                                     NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
+                                                                           (unsigned long)self.textFontSize];
+                                                     [self.webview stringByEvaluatingJavaScriptFromString:jsString];
+                                                 }];
+        
         UIAlertAction *clearCacheAction = [UIAlertAction
                                            actionWithTitle:@"Clear Cache"
                                            style:UIAlertActionStyleDestructive
@@ -416,43 +506,7 @@ typedef struct _Input
                                                  
                                              }];
         
-        UIAlertAction *increaseFontSizeAction = [UIAlertAction
-                                             actionWithTitle:@"Increase Font Size"
-                                             style:UIAlertActionStyleDefault
-                                             handler:^(UIAlertAction *action)
-                                             {
-                                                 self.textFontSize = (self.textFontSize < 160) ? self.textFontSize +5 : self.textFontSize;
-                                                 
-                                                 NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
-                                                                       (unsigned long)self.textFontSize];
-                                                 [self.webview stringByEvaluatingJavaScriptFromString:jsString];
-                                             }];
         
-        UIAlertAction *decreaseFontSizeAction = [UIAlertAction
-                                                 actionWithTitle:@"Decrease Font Size"
-                                                 style:UIAlertActionStyleDefault
-                                                 handler:^(UIAlertAction *action)
-                                                 {
-                                                     self.textFontSize = (self.textFontSize > 50) ? self.textFontSize -5 : self.textFontSize;
-                                                     
-                                                     NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
-                                                                           (unsigned long)self.textFontSize];
-                                                     [self.webview stringByEvaluatingJavaScriptFromString:jsString];
-                                                 }];
-        
-        UIAlertAction *scalePageToFitAction = [UIAlertAction
-                                                 actionWithTitle:@"Scale Page to Fit"
-                                                 style:UIAlertActionStyleDefault
-                                                 handler:^(UIAlertAction *action)
-                                                 {
-                                                     if (self.webview.scalesPageToFit) {
-                                                         self.webview.scalesPageToFit = NO;
-                                                     } else {
-                                                         self.webview.scalesPageToFit = YES;
-                                                         self.webview.contentMode = UIViewContentModeScaleAspectFit;
-                                                     }
-                                                     [self.webview reload];
-                                                 }];
         /*
          UIAlertAction *reloadAction = [UIAlertAction
          actionWithTitle:@"Reload Page"
@@ -480,12 +534,16 @@ typedef struct _Input
         else {
             [alertController addAction:mobileModeAction];
         }
+        if (self.webview.scalesPageToFit) {
+            [alertController addAction:stopScalePageToFitAction];
+        } else {
+            [alertController addAction:scalePageToFitAction];
+        }
+        [alertController addAction:increaseFontSizeAction];
+        [alertController addAction:decreaseFontSizeAction];
         [alertController addAction:clearCacheAction];
         [alertController addAction:clearCookiesAction];
         [alertController addAction:showHintsAction];
-        [alertController addAction:increaseFontSizeAction];
-        [alertController addAction:decreaseFontSizeAction];
-        [alertController addAction:scalePageToFitAction];
         [alertController addAction:cancelAction];
         [self presentViewController:alertController animated:YES completion:nil];
     }
@@ -817,8 +875,13 @@ typedef struct _Input
         else
         {
             /* Gross. */
-            CGPoint point = [self.webview convertPoint:cursorView.frame.origin toView:nil];
+            CGPoint point = [self.view convertPoint:cursorView.frame.origin toView:self.webview];
+            int displayWidth = [[self.webview stringByEvaluatingJavaScriptFromString:@"window.innerWidth"] intValue];
+            CGFloat scale = self.webview.frame.size.width / displayWidth;
             
+            point.x /= scale;
+            point.y /= scale;
+
             [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).click()", (int)point.x, (int)point.y]];
             // Make the UIWebView method call
             NSString *fieldType = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).type;", (int)point.x, (int)point.y]];
