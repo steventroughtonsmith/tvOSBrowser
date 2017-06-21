@@ -1,7 +1,12 @@
 tvOS Browser
 =============
 
-Web browser for tvOS using private API (aka UIWebView).
+tvOS Browser is a web browser for tvOS utilizing a private API (aka UIWebView). Moballo, LLC accepts no liability for the usage of this software. This software is provided as is with no warrenty or liability. Use at your own risk.
+
+How to Install tvOS Browser
+=============
+
+To install this app, connect your Apple TV to your macOS computer via usb. Open this project in XCode and install to your Apple TV.
 
 To build successfully, you'll need to change 2 lines in Availability.h starting around line 280:
 ```
@@ -20,7 +25,7 @@ To:
 ```
 Do this for Availability.h for both simulator and device if you want to run it on the real hardware.
 
-How to Use tvOSBrowser
+How to Use tvOS Browser
 =============
 
 - Double press on the center of the touch area of the Apple TV Remote to switch between cursor & scroll mode.
