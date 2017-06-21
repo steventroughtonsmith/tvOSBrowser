@@ -10,7 +10,7 @@
 #import <UIKit/UIKit.h>
 #import <GameKit/GameKit.h>
 
-@interface ViewController : GCEventViewController  <UIWebViewDelegate>
+@interface ViewController : GCEventViewController
 
 
 @end
