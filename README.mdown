@@ -1,7 +1,10 @@
 tvOS Browser
 =============
 
-Web browser for tvOS using private API (aka UIWebView). Moballo, LLC accepts no liability for the usage of this software. This software is provided as is with no warrenty or liability. Use at your own risk.
+tvOS Browser is a web browser for tvOS utilizing a private API (aka UIWebView). Moballo, LLC accepts no liability for the usage of this software. This software is provided as is with no warrenty or liability. Use at your own risk.
+
+How to Install tvOS Browser
+=============
 
 To install this app, connect your Apple TV to your macOS computer via usb. Open this project in XCode and install to your Apple TV.
 
