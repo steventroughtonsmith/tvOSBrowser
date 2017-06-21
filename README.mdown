@@ -8,23 +8,6 @@ How to Install tvOS Browser
 
 To install this app, connect your Apple TV to your macOS computer via usb. Open this project in XCode and install to your Apple TV.
 
-To build successfully, you'll need to change 2 lines in Availability.h starting around line 280:
-```
-Availability.h for the AppleTV: '/Applications/Xcode.app/Contents/Developer/Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS.sdk/usr/include/Availability.h'
-Availability.h for the AppleTV Simulator: '/Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator.sdk/usr/include/Availability.h'
-```
-Change:
-```
-#define __TVOS_UNAVAILABLE                    __OS_AVAILABILITY(tvos,unavailable)
-#define __TVOS_PROHIBITED                     __OS_AVAILABILITY(tvos,unavailable)
-```
-To:
-```
-#define __TVOS_UNAVAILABLE_NOTQUITE                    __OS_AVAILABILITY(tvos,unavailable)
-#define __TVOS_PROHIBITED_NOTQUITE                     __OS_AVAILABILITY(tvos,unavailable)
-```
-Do this for Availability.h for both simulator and device if you want to run it on the real hardware.
-
 How to Use tvOS Browser
 =============
 
