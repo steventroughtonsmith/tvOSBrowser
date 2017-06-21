@@ -26,7 +26,7 @@ typedef struct _Input
     NSString *previousURL;
 }
 
-@property UIWebView *webview;
+@property id webview;
 @property (strong) CADisplayLink *link;
 @property (strong, nonatomic) GCController *controller;
 @property BOOL cursorMode;
@@ -41,18 +41,19 @@ typedef struct _Input
     UITapGestureRecognizer *touchSurfaceDoubleTapRecognizer;
     UITapGestureRecognizer *playPauseOrMenuDoubleTapRecognizer;
 }
--(void) webViewDidStartLoad:(UIWebView *)webView {
+-(void) webViewDidStartLoad:(id)webView {
     //[self.view bringSubviewToFront:loadingSpinner];
     if (![previousURL isEqualToString:requestURL]) {
         [loadingSpinner startAnimating];
     }
     previousURL = requestURL;
 }
--(void) webViewDidFinishLoad:(UIWebView *)webView {
+-(void) webViewDidFinishLoad:(id)webView {
     [loadingSpinner stopAnimating];
     //[self.view bringSubviewToFront:loadingSpinner];
     NSString *theTitle=[webView stringByEvaluatingJavaScriptFromString:@"document.title"];
-    NSString *currentURL = webView.request.URL.absoluteString;
+    NSURLRequest *request = [webView request];
+    NSString *currentURL = request.URL.absoluteString;
     NSArray *toSaveItem = [NSArray arrayWithObjects:currentURL, theTitle, nil];
     NSMutableArray *historyArray = [NSMutableArray arrayWithObjects:toSaveItem, nil];
     if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] != nil) {
@@ -82,7 +83,7 @@ typedef struct _Input
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"savedURLtoReopen"];
         [[NSUserDefaults standardUserDefaults] synchronize];
     }
-    else if (_webview.request == nil) {
+    else if ([_webview request] == nil) {
         //[self requestURLorSearchInput];
         [self loadHomePage];
     }
@@ -99,19 +100,20 @@ typedef struct _Input
     }
 }
 -(void)initWebView {
-    self.webview = [[UIWebView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    self.webview = [[NSClassFromString(@"UIWebView") alloc] initWithFrame:[UIScreen mainScreen].bounds];
     //[self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.google.com"]]];
     
     [self.view addSubview:self.webview];
-    self.webview.delegate = self;
-    self.webview.scrollView.bounces = _scrollViewAllowBounces;
-    self.webview.scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
-    self.webview.scrollView.scrollEnabled = NO;
-    self.webview.userInteractionEnabled = NO;
+    [self.webview setDelegate:self];
+    UIScrollView *scrollView = [self.webview scrollView];
+    scrollView.bounces = _scrollViewAllowBounces;
+    scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
+    scrollView.scrollEnabled = NO;
+    [self.webview setUserInteractionEnabled:NO];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"ScalePagesToFit"]) {
-        self.webview.scalesPageToFit = YES;
+        [self.webview setScalesPageToFit:YES];
     } else {
-        self.webview.scalesPageToFit = NO;
+        [self.webview setScalesPageToFit:NO];
     }
 }
 -(void)viewDidLoad {
@@ -174,10 +176,10 @@ typedef struct _Input
                                             style:UIAlertActionStyleDefault
                                             handler:^(UIAlertAction *action)
                                             {
-                                                if (_webview.request != nil) {
-                                                    if (![_webview.request.URL.absoluteString isEqual:@""]) {
-                                                        [[NSUserDefaults standardUserDefaults] setObject:_webview.request.URL.absoluteString forKey:@"homepage"];
-                                                        [[NSUserDefaults standardUserDefaults] synchronize];
+                                                NSURLRequest *request = [_webview request];
+                                                if (request != nil) {
+                                                    if (![request.URL.absoluteString isEqual:@""]) {
+                                                        [[NSUserDefaults standardUserDefaults] setObject:request.URL.absoluteString forKey:@"homepage"];
                                                     }
                                                 }
                                             }];
@@ -247,7 +249,8 @@ typedef struct _Input
                                                                                          handler:^(UIAlertAction *action)
                                                                                          {
                                                                                              NSString *theTitle=[_webview stringByEvaluatingJavaScriptFromString:@"document.title"];
-                                                                                             NSString *currentURL = _webview.request.URL.absoluteString;
+                                                                                             NSURLRequest *request = [self.webview request];
+                                                                                             NSString *currentURL = request.URL.absoluteString;
                                                                                              UIAlertController *favoritesAddToController = [UIAlertController
                                                                                                                                             alertControllerWithTitle:@"Name New Favorite"
                                                                                                                                             message:currentURL
@@ -377,10 +380,10 @@ typedef struct _Input
                                                [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MobileMode"];
                                                [[NSUserDefaults standardUserDefaults] synchronize];
-                                               
-                                               if (_webview.request != nil) {
-                                                   if (![_webview.request.URL.absoluteString isEqual:@""]) {
-                                                       [[NSUserDefaults standardUserDefaults] setObject:_webview.request.URL.absoluteString forKey:@"savedURLtoReopen"];
+                                               NSURLRequest *request = [_webview request];
+                                               if (request != nil) {
+                                                    if (![request.URL.absoluteString isEqual:@""]) {
+                                                       [[NSUserDefaults standardUserDefaults] setObject:request.URL.absoluteString forKey:@"savedURLtoReopen"];
                                                        [[NSUserDefaults standardUserDefaults] synchronize];
                                                    }
                                                }
@@ -410,10 +413,10 @@ typedef struct _Input
                                                 [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                                 [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MobileMode"];
                                                 [[NSUserDefaults standardUserDefaults] synchronize];
-                                                
-                                                if (_webview.request != nil) {
-                                                    if (![_webview.request.URL.absoluteString isEqual:@""]) {
-                                                        [[NSUserDefaults standardUserDefaults] setObject:_webview.request.URL.absoluteString forKey:@"savedURLtoReopen"];
+                                                NSURLRequest *request = [_webview request];
+                                                if (request != nil) {
+                                                    if (![request.URL.absoluteString isEqual:@""]) {
+                                                        [[NSUserDefaults standardUserDefaults] setObject:request.URL.absoluteString forKey:@"savedURLtoReopen"];
                                                         [[NSUserDefaults standardUserDefaults] synchronize];
                                                     }
                                                 }
@@ -441,8 +444,8 @@ typedef struct _Input
                                                {
                                                    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"ScalePagesToFit"];
                                                    [[NSUserDefaults standardUserDefaults] synchronize];
-                                                   self.webview.scalesPageToFit = YES;
-                                                   self.webview.contentMode = UIViewContentModeScaleAspectFit;
+                                                   [self.webview setScalesPageToFit:YES];
+                                                   [self.webview setContentMode:UIViewContentModeScaleAspectFit];
                                                    [self.webview reload];
                                                }];
         UIAlertAction *stopScalePageToFitAction = [UIAlertAction
@@ -452,7 +455,7 @@ typedef struct _Input
                                                    {
                                                        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"ScalePagesToFit"];
                                                        [[NSUserDefaults standardUserDefaults] synchronize];
-                                                       self.webview.scalesPageToFit = NO;
+                                                       [self.webview setScalesPageToFit:NO];
                                                        [self.webview reload];
                                                    }];
         
@@ -534,7 +537,7 @@ typedef struct _Input
         else {
             [alertController addAction:mobileModeAction];
         }
-        if (self.webview.scalesPageToFit) {
+        if ([self.webview scalesPageToFit]) {
             [alertController addAction:stopScalePageToFitAction];
         } else {
             [alertController addAction:scalePageToFitAction];
@@ -649,28 +652,29 @@ typedef struct _Input
                                    }];
     [alertController addAction:searchAction];
     [alertController addAction:goAction];
-    if (_webview.request != nil) {
-        if (![_webview.request.URL.absoluteString  isEqual: @""]) {
+    NSURLRequest *request = [_webview request];
+    if (request != nil) {
+        if (![request.URL.absoluteString  isEqual: @""]) {
             [alertController addAction:reloadAction];
             [alertController addAction:cancelAction];
         }
     }
     [self presentViewController:alertController animated:YES completion:nil];
-    if (_webview.request == nil) {
+    if (request == nil) {
         UITextField *loginTextField = alertController.textFields[0];
         [loginTextField becomeFirstResponder];
     }
-    else if ([_webview.request.URL.absoluteString  isEqual: @""]) {
+    else if (![request.URL.absoluteString  isEqual: @""]) {
         UITextField *loginTextField = alertController.textFields[0];
         [loginTextField becomeFirstResponder];
     }
     
 }
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
+- (BOOL)webView:(id)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(NSInteger)navigationType {
     requestURL = request.URL.absoluteString;
     return YES;
 }
-- (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
+- (void)webView:(id)webView didFailLoadWithError:(NSError *)error {
     [loadingSpinner stopAnimating];
     if (![[NSString stringWithFormat:@"%lid", (long)error.code] containsString:@"999"] && ![[NSString stringWithFormat:@"%lid", (long)error.code] containsString:@"204"]) {
         UIAlertController *alertController = [UIAlertController
@@ -724,8 +728,9 @@ typedef struct _Input
                 [alertController addAction:searchAction];
             }
         }
-        if (_webview.request != nil) {
-            if (![_webview.request.URL.absoluteString  isEqual: @""]) {
+        NSURLRequest *request = [_webview request];
+        if (request != nil) {
+            if (![request.URL.absoluteString  isEqual: @""]) {
                 [alertController addAction:reloadAction];
             }
             else {
@@ -743,17 +748,17 @@ typedef struct _Input
 -(void)toggleMode
 {
     self.cursorMode = !self.cursorMode;
-    
+    UIScrollView *scrollView = [self.webview scrollView];
     if (self.cursorMode)
     {
-        self.webview.scrollView.scrollEnabled = NO;
-        self.webview.userInteractionEnabled = NO;
+        scrollView.scrollEnabled = NO;
+        [self.webview setUserInteractionEnabled:NO];
         cursorView.hidden = NO;
     }
     else
     {
-        self.webview.scrollView.scrollEnabled = YES;
-        self.webview.userInteractionEnabled = YES;
+        scrollView.scrollEnabled = YES;
+        [self.webview setUserInteractionEnabled:YES];
         cursorView.hidden = YES;
     }
 }
@@ -877,7 +882,7 @@ typedef struct _Input
             /* Gross. */
             CGPoint point = [self.view convertPoint:cursorView.frame.origin toView:self.webview];
             int displayWidth = [[self.webview stringByEvaluatingJavaScriptFromString:@"window.innerWidth"] intValue];
-            CGFloat scale = self.webview.frame.size.width / displayWidth;
+            CGFloat scale = [self.webview frame].size.width / displayWidth;
             
             point.x /= scale;
             point.y /= scale;
