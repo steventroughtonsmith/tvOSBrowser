@@ -100,25 +100,62 @@ typedef struct _Input
     }
 }
 -(void)initWebView {
-    self.webview = [[NSClassFromString(@"UIWebView") alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    if (@available(tvOS 11.0, *)) {
+        self.view.insetsLayoutMarginsFromSafeArea = false;
+        self.additionalSafeAreaInsets = UIEdgeInsetsZero;
+    }
+    self.webview = [[NSClassFromString(@"UIWebView") alloc] init];
+    [self.webview setTranslatesAutoresizingMaskIntoConstraints:false];
+    [self.webview setClipsToBounds:false];
+    
     //[self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.google.com"]]];
     
-    [self.view addSubview:self.webview];
+    [self.view addSubview: self.webview];
+    [self.webview setFrame:self.view.frame];
     [self.webview setDelegate:self];
+    [self.webview setLayoutMargins:UIEdgeInsetsZero];
     UIScrollView *scrollView = [self.webview scrollView];
+    [scrollView setLayoutMargins:UIEdgeInsetsZero];
+    if (@available(tvOS 11.0, *)) {
+        scrollView.insetsLayoutMarginsFromSafeArea = false;
+    }
+    scrollView.contentOffset = CGPointZero;
+    scrollView.contentInset = UIEdgeInsetsZero;
+    scrollView.frame = self.view.frame;
+    scrollView.clipsToBounds = NO;
+    [scrollView setNeedsLayout];
+    [scrollView layoutIfNeeded];
+    [self.view setNeedsLayout];
+    [self.view layoutIfNeeded];
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
+        CGPoint point = CGPointMake(60, 90);
+        scrollView.contentInset = UIEdgeInsetsMake(-point.x, -point.y, -point.x, -point.y);
+    }
     scrollView.bounces = _scrollViewAllowBounces;
     scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
     scrollView.scrollEnabled = NO;
+    
     [self.webview setUserInteractionEnabled:NO];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"ScalePagesToFit"]) {
-        [self.webview setScalesPageToFit:YES];
+        [self offsetCorrection:YES];
     } else {
-        [self.webview setScalesPageToFit:NO];
+        [self offsetCorrection:NO];
+    }
+}
+-(void)offsetCorrection:(bool)yes {
+    UIScrollView *scrollView = [self.webview scrollView];
+    if (yes) {
+        CGPoint point = CGPointMake(60, 90);
+        scrollView.contentInset = UIEdgeInsetsMake(-point.x, -point.y, -point.x, -point.y);
+    } else {
+        scrollView.contentInset = UIEdgeInsetsZero;
     }
 }
 -(void)viewDidLoad {
+    self.automaticallyAdjustsScrollViewInsets = NO;
+    self.definesPresentationContext = YES;
     [self initWebView];
-    _scrollViewAllowBounces = NO;
+    _scrollViewAllowBounces = YES;
     [super viewDidLoad];
     touchSurfaceDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleTouchSurfaceDoubleTap:)];
     touchSurfaceDoubleTapRecognizer.numberOfTapsRequired = 2;
@@ -458,6 +495,26 @@ typedef struct _Input
                                                        [self.webview setScalesPageToFit:NO];
                                                        [self.webview reload];
                                                    }];
+        UIAlertAction *disableOffsetCorrectionAction = [UIAlertAction
+                                                   actionWithTitle:@"Stop Correcting Offset"
+                                                   style:UIAlertActionStyleDefault
+                                                   handler:^(UIAlertAction *action)
+                                                   {
+                                                       [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"DisableOffsetCorrection"];
+                                                       [[NSUserDefaults standardUserDefaults] synchronize];
+                                                       [self offsetCorrection:NO];
+                                                       [self.webview reload];
+                                                   }];
+        UIAlertAction *enableOffsetCorrectionAction = [UIAlertAction
+                                                        actionWithTitle:@"Enable Offset Correction"
+                                                        style:UIAlertActionStyleDefault
+                                                        handler:^(UIAlertAction *action)
+                                                        {
+                                                            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"DisableOffsetCorrection"];
+                                                            [[NSUserDefaults standardUserDefaults] synchronize];
+                                                            [self offsetCorrection:YES];
+                                                            [self.webview reload];
+                                                        }];
         
         UIAlertAction *increaseFontSizeAction = [UIAlertAction
                                                  actionWithTitle:@"Increase Font Size"
@@ -542,6 +599,14 @@ typedef struct _Input
         } else {
             [alertController addAction:scalePageToFitAction];
         }
+        
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
+            [alertController addAction:enableOffsetCorrectionAction];
+        }
+        else {
+            [alertController addAction:disableOffsetCorrectionAction];
+        }
+        
         [alertController addAction:increaseFontSizeAction];
         [alertController addAction:decreaseFontSizeAction];
         [alertController addAction:clearCacheAction];
