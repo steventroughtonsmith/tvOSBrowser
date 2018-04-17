@@ -73,6 +73,7 @@ typedef struct _Input
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
 -(void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
     loadingSpinner.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
     [self webViewDidAppear];
     _displayedHintsOnLaunch = YES;
@@ -83,7 +84,7 @@ typedef struct _Input
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"savedURLtoReopen"];
         [[NSUserDefaults standardUserDefaults] synchronize];
     }
-    else if ([_webview request] == nil) {
+    else if ([self.webview request] == nil) {
         //[self requestURLorSearchInput];
         [self loadHomePage];
     }
@@ -213,7 +214,7 @@ typedef struct _Input
                                             style:UIAlertActionStyleDefault
                                             handler:^(UIAlertAction *action)
                                             {
-                                                NSURLRequest *request = [_webview request];
+                                                NSURLRequest *request = [self.webview request];
                                                 if (request != nil) {
                                                     if (![request.URL.absoluteString isEqual:@""]) {
                                                         [[NSUserDefaults standardUserDefaults] setObject:request.URL.absoluteString forKey:@"homepage"];
@@ -285,7 +286,7 @@ typedef struct _Input
                                                                                          style:UIAlertActionStyleDefault
                                                                                          handler:^(UIAlertAction *action)
                                                                                          {
-                                                                                             NSString *theTitle=[_webview stringByEvaluatingJavaScriptFromString:@"document.title"];
+                                                                                             NSString *theTitle=[self.webview stringByEvaluatingJavaScriptFromString:@"document.title"];
                                                                                              NSURLRequest *request = [self.webview request];
                                                                                              NSString *currentURL = request.URL.absoluteString;
                                                                                              UIAlertController *favoritesAddToController = [UIAlertController
@@ -317,7 +318,7 @@ typedef struct _Input
                                                                                                                               if ([toMod isEqualToString:@""]) {
                                                                                                                                   toMod = currentURL;
                                                                                                                               }
-                                                                                                                              NSArray *toSaveItem = [NSArray arrayWithObjects:currentURL, theTitle, nil];
+                                                                                                                              NSArray *toSaveItem = [NSArray arrayWithObjects:toMod, theTitle, nil];
                                                                                                                               NSMutableArray *historyArray = [NSMutableArray arrayWithObjects:toSaveItem, nil];
                                                                                                                               if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"FAVORITES"] != nil) {
                                                                                                                                   historyArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:@"FAVORITES"] mutableCopy];
@@ -417,7 +418,7 @@ typedef struct _Input
                                                [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MobileMode"];
                                                [[NSUserDefaults standardUserDefaults] synchronize];
-                                               NSURLRequest *request = [_webview request];
+                                               NSURLRequest *request = [self.webview request];
                                                if (request != nil) {
                                                     if (![request.URL.absoluteString isEqual:@""]) {
                                                        [[NSUserDefaults standardUserDefaults] setObject:request.URL.absoluteString forKey:@"savedURLtoReopen"];
@@ -434,8 +435,8 @@ typedef struct _Input
                                                    dispatch_sync(dispatch_get_main_queue(), ^{
                                                        [self.webview removeFromSuperview];
                                                        [self initWebView];
-                                                       [self.view bringSubviewToFront:cursorView];
-                                                       [self.view bringSubviewToFront:loadingSpinner];
+                                                       [self.view bringSubviewToFront:self->cursorView];
+                                                       [self.view bringSubviewToFront:self->loadingSpinner];
                                                        [self webViewDidAppear];
                                                        
                                                    });
@@ -450,7 +451,7 @@ typedef struct _Input
                                                 [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                                 [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MobileMode"];
                                                 [[NSUserDefaults standardUserDefaults] synchronize];
-                                                NSURLRequest *request = [_webview request];
+                                                NSURLRequest *request = [self.webview request];
                                                 if (request != nil) {
                                                     if (![request.URL.absoluteString isEqual:@""]) {
                                                         [[NSUserDefaults standardUserDefaults] setObject:request.URL.absoluteString forKey:@"savedURLtoReopen"];
@@ -467,8 +468,8 @@ typedef struct _Input
                                                     dispatch_sync(dispatch_get_main_queue(), ^{
                                                         [self.webview removeFromSuperview];
                                                         [self initWebView];
-                                                        [self.view bringSubviewToFront:cursorView];
-                                                        [self.view bringSubviewToFront:loadingSpinner];
+                                                        [self.view bringSubviewToFront:self->cursorView];
+                                                        [self.view bringSubviewToFront:self->loadingSpinner];
                                                         [self webViewDidAppear];
                                                         
                                                     });
@@ -547,7 +548,7 @@ typedef struct _Input
                                            {
                                                [[NSURLCache sharedURLCache] removeAllCachedResponses];
                                                [[NSUserDefaults standardUserDefaults] synchronize];
-                                               previousURL = @"";
+                                               self->previousURL = @"";
                                                [self.webview reload];
                                                
                                            }];
@@ -561,7 +562,7 @@ typedef struct _Input
                                                      [storage deleteCookie:cookie];
                                                  }
                                                  [[NSUserDefaults standardUserDefaults] synchronize];
-                                                 previousURL = @"";
+                                                 self->previousURL = @"";
                                                  [self.webview reload];
                                                  
                                              }];
@@ -577,8 +578,8 @@ typedef struct _Input
          previousURL = @"";
          [self.webview reload];
          }];
-         if (_webview.request != nil) {
-         if (![_webview.request.URL.absoluteString  isEqual: @""]) {
+         if (self.webview.request != nil) {
+         if (![self.webview.request.URL.absoluteString  isEqual: @""]) {
          [alertController addAction:reloadAction];
          }
          }
@@ -705,7 +706,7 @@ typedef struct _Input
                                    style:UIAlertActionStyleDefault
                                    handler:^(UIAlertAction *action)
                                    {
-                                       previousURL = @"";
+                                       self->previousURL = @"";
                                        [self.webview reload];
                                    }];
     
@@ -717,7 +718,7 @@ typedef struct _Input
                                    }];
     [alertController addAction:searchAction];
     [alertController addAction:goAction];
-    NSURLRequest *request = [_webview request];
+    NSURLRequest *request = [self.webview request];
     if (request != nil) {
         if (![request.URL.absoluteString  isEqual: @""]) {
             [alertController addAction:reloadAction];
@@ -752,18 +753,18 @@ typedef struct _Input
                                        style:UIAlertActionStyleDefault
                                        handler:^(UIAlertAction *action)
                                        {
-                                           if (requestURL != nil) {
-                                               if ([requestURL length] > 1) {
-                                                   NSString *lastChar = [requestURL substringFromIndex: [requestURL length] - 1];
+                                           if (self->requestURL != nil) {
+                                               if ([self->requestURL length] > 1) {
+                                                   NSString *lastChar = [self->requestURL substringFromIndex: [self->requestURL length] - 1];
                                                    if ([lastChar isEqualToString:@"/"]) {
-                                                       NSString *newString = [requestURL substringToIndex:[requestURL length]-1];
-                                                       requestURL = newString;
+                                                       NSString *newString = [self->requestURL substringToIndex:[self->requestURL length]-1];
+                                                       self->requestURL = newString;
                                                    }
                                                }
-                                               requestURL = [requestURL stringByReplacingOccurrencesOfString:@"http://" withString:@""];
-                                               requestURL = [requestURL stringByReplacingOccurrencesOfString:@"https://" withString:@""];
-                                               requestURL = [requestURL stringByReplacingOccurrencesOfString:@"www." withString:@""];
-                                               [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", requestURL]]]];
+                                               self->requestURL = [self->requestURL stringByReplacingOccurrencesOfString:@"http://" withString:@""];
+                                               self->requestURL = [self->requestURL stringByReplacingOccurrencesOfString:@"https://" withString:@""];
+                                               self->requestURL = [self->requestURL stringByReplacingOccurrencesOfString:@"www." withString:@""];
+                                               [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", self->requestURL]]]];
                                            }
                                            
                                        }];
@@ -772,7 +773,7 @@ typedef struct _Input
                                        style:UIAlertActionStyleDefault
                                        handler:^(UIAlertAction *action)
                                        {
-                                           previousURL = @"";
+                                           self->previousURL = @"";
                                            [self.webview reload];
                                        }];
         UIAlertAction *newurlAction = [UIAlertAction
@@ -793,7 +794,7 @@ typedef struct _Input
                 [alertController addAction:searchAction];
             }
         }
-        NSURLRequest *request = [_webview request];
+        NSURLRequest *request = [self.webview request];
         if (request != nil) {
             if (![request.URL.absoluteString  isEqual: @""]) {
                 [alertController addAction:reloadAction];
@@ -954,17 +955,17 @@ typedef struct _Input
 
             [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).click()", (int)point.x, (int)point.y]];
             // Make the UIWebView method call
-            NSString *fieldType = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).type;", (int)point.x, (int)point.y]];
+            NSString *fieldType = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).type;", (int)point.x, (int)point.y]];
             /*
              if (fieldType == nil) {
-             NSString *contentEditible = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).getAttribute('contenteditable');", (int)point.x, (int)point.y]];
+             NSString *contentEditible = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).getAttribute('contenteditable');", (int)point.x, (int)point.y]];
              NSLog(contentEditible);
              if ([contentEditible isEqualToString:@"true"]) {
              fieldType = @"text";
              }
              }
              else if ([[fieldType stringByReplacingOccurrencesOfString:@" " withString:@""] isEqualToString: @""]) {
-             NSString *contentEditible = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).getAttribute('contenteditable');", (int)point.x, (int)point.y]];
+             NSString *contentEditible = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).getAttribute('contenteditable');", (int)point.x, (int)point.y]];
              NSLog(contentEditible);
              if ([contentEditible isEqualToString:@"true"]) {
              fieldType = @"text";
@@ -974,11 +975,11 @@ typedef struct _Input
              */
             fieldType = fieldType.lowercaseString;
             if ([fieldType isEqualToString:@"date"] || [fieldType isEqualToString:@"datetime"] || [fieldType isEqualToString:@"datetime-local"] || [fieldType isEqualToString:@"email"] || [fieldType isEqualToString:@"month"] || [fieldType isEqualToString:@"number"] || [fieldType isEqualToString:@"password"] || [fieldType isEqualToString:@"tel"] || [fieldType isEqualToString:@"text"] || [fieldType isEqualToString:@"time"] || [fieldType isEqualToString:@"url"] || [fieldType isEqualToString:@"week"]) {
-                NSString *fieldTitle = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).title;", (int)point.x, (int)point.y]];
+                NSString *fieldTitle = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).title;", (int)point.x, (int)point.y]];
                 if ([fieldTitle isEqualToString:@""]) {
                     fieldTitle = fieldType;
                 }
-                NSString *placeholder = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).placeholder;", (int)point.x, (int)point.y]];
+                NSString *placeholder = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).placeholder;", (int)point.x, (int)point.y]];
                 if ([placeholder isEqualToString:@""]) {
                     if (![fieldTitle isEqualToString:fieldType]) {
                         placeholder = [NSString stringWithFormat:@"%@ Input", fieldTitle];
@@ -987,7 +988,7 @@ typedef struct _Input
                         placeholder = @"Text Input";
                     }
                 }
-                NSString *testedFormResponse = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).form.hasAttribute('onsubmit');", (int)point.x, (int)point.y]];
+                NSString *testedFormResponse = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).form.hasAttribute('onsubmit');", (int)point.x, (int)point.y]];
                 UIAlertController *alertController = [UIAlertController
                                                       alertControllerWithTitle:@"Input Text"
                                                       message: [fieldTitle capitalizedString]
@@ -1011,7 +1012,7 @@ typedef struct _Input
                      if ([fieldType isEqualToString:@"password"]) {
                          textField.secureTextEntry = YES;
                      }
-                     textField.text = [_webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).value;", (int)point.x, (int)point.y]];
+                     textField.text = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).value;", (int)point.x, (int)point.y]];
                      textField.textColor = [UIColor blackColor];
                      textField.backgroundColor = [UIColor whiteColor];
                      [textField setReturnKeyType:UIReturnKeyDone];
@@ -1033,7 +1034,7 @@ typedef struct _Input
                                                                                    //"ev.initKeyEvent('keydown', true, true, window, false, false, false, false, 13, 0);"
                                                                                    //"document.body.dispatchEvent(ev);"
                                                                                    , (int)point.x, (int)point.y, inputViewTextField.text];
-                                                           [_webview stringByEvaluatingJavaScriptFromString:javaScript];
+                                                           [self.webview stringByEvaluatingJavaScriptFromString:javaScript];
                                                        }];
                 UIAlertAction *inputAction = [UIAlertAction
                                               actionWithTitle:@"Done"
@@ -1043,7 +1044,7 @@ typedef struct _Input
                                                   UITextField *inputViewTextField = alertController.textFields[0];
                                                   NSString *javaScript = [NSString stringWithFormat:@"var textField = document.elementFromPoint(%i, %i);"
                                                                           "textField.value = '%@';", (int)point.x, (int)point.y, inputViewTextField.text];
-                                                  [_webview stringByEvaluatingJavaScriptFromString:javaScript];
+                                                  [self.webview stringByEvaluatingJavaScriptFromString:javaScript];
                                               }];
                 UIAlertAction *cancelAction = [UIAlertAction
                                                actionWithTitle:@"Cancel"
@@ -1087,12 +1088,12 @@ typedef struct _Input
     if ( gesture.state == UIGestureRecognizerStateBegan) {
         //[self toggleMode];
         /*
-         //if ([_webview.scrollView zoomScale] != 1.0) {
-         if (![[_webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom;"]  isEqual: @"1.0"]) {
-         [_webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom = 1.0;"];
+         //if ([self.webview.scrollView zoomScale] != 1.0) {
+         if (![[self.webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom;"]  isEqual: @"1.0"]) {
+         [self.webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom = 1.0;"];
          }
          else {
-         [_webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom = 5.0;"];
+         [self.webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom = 5.0;"];
          }
          */
         
