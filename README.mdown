@@ -6,7 +6,8 @@ tvOS Browser is a web browser for tvOS utilizing a private API (aka UIWebView). 
 How to Install tvOS Browser
 =============
 
-To install this app, connect your Apple TV to your macOS computer via usb. Open this project in XCode and install to your Apple TV.
+To install this app, connect your Apple TV to your macOS computer via USB. Open this project in XCode and install to your Apple TV.
+If your Apple TV does not have a USB-C port or you don't have a cable, connect to your Apple TV wirelessly: http://www.redmondpie.com/how-to-wirelessly-connect-apple-tv-4k-to-xcode-on-mac/.
 
 How to Use tvOS Browser
 =============
