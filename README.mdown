@@ -1,25 +1,15 @@
 tvOS Browser
 =============
 
-Web browser for tvOS using private API (aka UIWebView).
-You'll need to redefine the following in Availability.h to build successfully.
-```
-Availability.h for the AppleTV is located in Xcode>Contents>Developer>Platforms>AppleTVOS.platform>Developer>SDKs>AppleTVOS.sdk>usr>include
-Availability.h for the AppleTV Simulator is located in Xcode>Contents>Developer>Platforms>AppleTVSimulator.platform>Developer>SDKs>AppleTVSimulator.sdk>usr>include
-```
-Change:
-```
-#define __TVOS_UNAVAILABLE                    __OS_AVAILABILITY(tvos,unavailable)
-#define __TVOS_PROHIBITED                     __OS_AVAILABILITY(tvos,unavailable)
-```
-To:
-```
-#define __TVOS_UNAVAILABLE_NOTQUITE                    __OS_AVAILABILITY(tvos,unavailable)
-#define __TVOS_PROHIBITED_NOTQUITE                     __OS_AVAILABILITY(tvos,unavailable)
-```
-Do this for Availability.h for both simulator and device if you want to run it on the real hardware.
+tvOS Browser is a web browser for tvOS utilizing a private API (aka UIWebView). Moballo, LLC accepts no liability for the usage of this software. This software is provided as is with no warrenty or liability. Use at your own risk.
 
-How to Use tvOSBrowser
+How to Install tvOS Browser
+=============
+
+To install this app, connect your Apple TV to your macOS computer via USB. Open this project in XCode and install to your Apple TV.
+If your Apple TV does not have a USB-C port or you don't have a cable, connect to your Apple TV wirelessly: http://www.redmondpie.com/how-to-wirelessly-connect-apple-tv-4k-to-xcode-on-mac/.
+
+How to Use tvOS Browser
 =============
 
 - Double press on the center of the touch area of the Apple TV Remote to switch between cursor & scroll mode.
