@@ -137,11 +137,6 @@ typedef struct _Input
     scrollView.scrollEnabled = NO;
     
     [self.webview setUserInteractionEnabled:NO];
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"ScalePagesToFit"]) {
-        [self offsetCorrection:YES];
-    } else {
-        [self offsetCorrection:NO];
-    }
 }
 -(void)offsetCorrection:(bool)yes {
     UIScrollView *scrollView = [self.webview scrollView];
