@@ -131,17 +131,15 @@ typedef struct _Input
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
         CGPoint point = CGPointMake(60, 90);
         scrollView.contentInset = UIEdgeInsetsMake(-point.x, -point.y, -point.x, -point.y);
+        [self offsetCorrection:YES];
+    } else {
+        [self offsetCorrection:NO];
     }
     scrollView.bounces = _scrollViewAllowBounces;
     scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
     scrollView.scrollEnabled = NO;
     
     [self.webview setUserInteractionEnabled:NO];
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"ScalePagesToFit"]) {
-        [self offsetCorrection:YES];
-    } else {
-        [self offsetCorrection:NO];
-    }
 }
 -(void)offsetCorrection:(bool)yes {
     UIScrollView *scrollView = [self.webview scrollView];
