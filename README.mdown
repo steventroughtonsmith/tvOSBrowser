@@ -1,4 +1,4 @@
-tvOS Browser
+tvOS Browser:
 The most advanced web browser for AppleTV
 =============
 
