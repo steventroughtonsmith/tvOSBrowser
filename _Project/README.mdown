@@ -3,28 +3,15 @@ tvOS Browser
 
 Web browser for tvOS using private API (aka UIWebView).
 
-To build successfully, you'll need to change 2 lines in Availability.h starting around line 280:
-```
-Availability.h for the AppleTV: '/Applications/Xcode.app/Contents/Developer/Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS.sdk/usr/include/Availability.h'
-Availability.h for the AppleTV Simulator: '/Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator.sdk/usr/include/Availability.h'
-```
-Change:
-```
-#define __TVOS_UNAVAILABLE                    __OS_AVAILABILITY(tvos,unavailable)
-#define __TVOS_PROHIBITED                     __OS_AVAILABILITY(tvos,unavailable)
-```
-To:
-```
-#define __TVOS_UNAVAILABLE_NOTQUITE                    __OS_AVAILABILITY(tvos,unavailable)
-#define __TVOS_PROHIBITED_NOTQUITE                     __OS_AVAILABILITY(tvos,unavailable)
-```
-Do this for Availability.h for both simulator and device if you want to run it on the real hardware.
+Update: Changing Availability.h to build successfully is NOT needed anymore from now on.
+The private UIWebView is now initialized using NSClassFromString(@"UIWebView"), which is a cleaner solution than changing your local Availability.h for both Device and Simulator builds.
+
+
 
 How to Use tvOSBrowser
 =============
 
 - Double press on the center of the touch area of the Apple TV Remote to switch between cursor & scroll mode.
 - Press the touch area while in cursor mode to click.
-- Menu will navigate back (like a back button).
-- Pressing the Play/Pause button will let you input URLs, search Google, and reload the page.
-- Double tapping the Play/Pause button or Menu button displays a menu with Favorites, History, set/open homepage, change user agent, clear cache, and clear cookies.
+- Single tap the Play/Pause button to: input URLs, search Google, reload the page, or navigate back.
+- Double tap the Play/Pause button to: display a menu with Favorites, History, set/open homepage, change user agent, clear cache, and clear cookies.

@@ -3,8 +3,7 @@
 //  Browser
 //
 //  Created by Steven Troughton-Smith on 20/09/2015.
-//  Improved by Jip van Akker on 14/10/2015
-//  Copyright © 2015 High Caffeine Content. All rights reserved.
+//  Improved by Jip van Akker on 14/10/2015 through 10/01/2019
 //
 
 #import "ViewController.h"
@@ -163,7 +162,9 @@ typedef struct _Input
     
     playPauseOrMenuDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleDoubleTapMenuOrPlayPause:)];
     playPauseOrMenuDoubleTapRecognizer.numberOfTapsRequired = 2;
-    playPauseOrMenuDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause], [NSNumber numberWithInteger:UIPressTypeMenu]];
+    //playPauseOrMenuDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause], [NSNumber numberWithInteger:UIPressTypeMenu]];
+    playPauseOrMenuDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause]];
+
     [self.view addGestureRecognizer:playPauseOrMenuDoubleTapRecognizer];
     
     cursorView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
@@ -197,7 +198,7 @@ typedef struct _Input
 -(void)handleDoubleTapMenuOrPlayPause:(UITapGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateEnded) {
         UIAlertController *alertController = [UIAlertController
-                                              alertControllerWithTitle:@"Menu"
+                                              alertControllerWithTitle:@"Advanced Menu"
                                               message:@""
                                               preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction *loadHomePageAction = [UIAlertAction
@@ -622,12 +623,20 @@ typedef struct _Input
 }
 -(void)requestURLorSearchInput
 {
+    
     UIAlertController *alertController = [UIAlertController
+                                          alertControllerWithTitle:@"Quick Menu"
+                                          message:@""
+                                          preferredStyle:UIAlertControllerStyleAlert];
+    
+    
+    
+    UIAlertController *alertController2 = [UIAlertController
                                           alertControllerWithTitle:@"Enter URL or Search Terms"
                                           message:@""
                                           preferredStyle:UIAlertControllerStyleAlert];
     
-    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField)
+    [alertController2 addTextFieldWithConfigurationHandler:^(UITextField *textField)
      {
          textField.keyboardType = UIKeyboardTypeURL;
          textField.placeholder = @"Enter URL or Search Terms";
@@ -640,12 +649,14 @@ typedef struct _Input
          
      }];
     
+    
+    
     UIAlertAction *goAction = [UIAlertAction
                                actionWithTitle:@"Go To Website"
                                style:UIAlertActionStyleDefault
                                handler:^(UIAlertAction *action)
                                {
-                                   UITextField *urltextfield = alertController.textFields[0];
+                                   UITextField *urltextfield = alertController2.textFields[0];
                                    NSString *toMod = urltextfield.text;
                                    /*
                                     if ([toMod containsString:@" "] || ![temporaryURL containsString:@"."]) {
@@ -678,12 +689,13 @@ typedef struct _Input
                                    //}
                                    
                                }];
+    
     UIAlertAction *searchAction = [UIAlertAction
                                    actionWithTitle:@"Search Google"
                                    style:UIAlertActionStyleDefault
                                    handler:^(UIAlertAction *action)
                                    {
-                                       UITextField *urltextfield = alertController.textFields[0];
+                                       UITextField *urltextfield = alertController2.textFields[0];
                                        NSString *toMod = urltextfield.text;
                                        toMod = [toMod stringByReplacingOccurrencesOfString:@" " withString:@"+"];
                                        toMod = [toMod stringByReplacingOccurrencesOfString:@"." withString:@"+"];
@@ -699,6 +711,15 @@ typedef struct _Input
                                        }
                                    }];
     
+    UIAlertAction *backAction = [UIAlertAction
+                                   actionWithTitle:@"Navigate Back"
+                                   style:UIAlertActionStyleDefault
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                       [self.webview goBack];
+                                   }];
+    
+    
     UIAlertAction *reloadAction = [UIAlertAction
                                    actionWithTitle:@"Reload Page"
                                    style:UIAlertActionStyleDefault
@@ -708,14 +729,35 @@ typedef struct _Input
                                        [self.webview reload];
                                    }];
     
+    UIAlertAction *inputAction = [UIAlertAction
+                                   actionWithTitle:@"Input URL or Search with Google"
+                                   style:UIAlertActionStyleDefault
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                       
+                                       [alertController2 addAction:searchAction];
+                                       [alertController2 addAction:goAction];
+                                       
+                                       [self presentViewController:alertController2 animated:YES completion:nil];
+                                       
+                                       
+                                   }];
+    
     UIAlertAction *cancelAction = [UIAlertAction
                                    actionWithTitle:@"Cancel"
                                    style:UIAlertActionStyleCancel
                                    handler:^(UIAlertAction *action)
                                    {
                                    }];
-    [alertController addAction:searchAction];
-    [alertController addAction:goAction];
+    
+    
+    
+    
+    if([self.webview canGoBack])
+        [alertController addAction:backAction];
+    
+    [alertController addAction:inputAction];
+    
     NSURLRequest *request = [self.webview request];
     if (request != nil) {
         if (![request.URL.absoluteString  isEqual: @""]) {
@@ -723,15 +765,21 @@ typedef struct _Input
             [alertController addAction:cancelAction];
         }
     }
+    
     [self presentViewController:alertController animated:YES completion:nil];
+    
+    
     if (request == nil) {
-        UITextField *loginTextField = alertController.textFields[0];
+        UITextField *loginTextField = alertController2.textFields[0];
         [loginTextField becomeFirstResponder];
     }
     else if (![request.URL.absoluteString  isEqual: @""]) {
-        UITextField *loginTextField = alertController.textFields[0];
+        UITextField *loginTextField = alertController2.textFields[0];
         [loginTextField becomeFirstResponder];
     }
+    
+    
+    
     
 }
 - (BOOL)webView:(id)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(NSInteger)navigationType {
@@ -824,13 +872,16 @@ typedef struct _Input
         scrollView.scrollEnabled = YES;
         [self.webview setUserInteractionEnabled:YES];
         cursorView.hidden = YES;
+        
+        
     }
 }
 - (void)showHintsAlert
 {
     UIAlertController *alertController = [UIAlertController
                                           alertControllerWithTitle:@"Usage Guide"
-                                          message:@"Double press the touch area to switch between cursor & scroll mode.\nPress the touch area while in cursor mode to click.\nPress the Menu button to navigate back.\nPress the Play/Pause button for a URL bar.\nDouble tap the Play/Pause button or Menu button for more options."
+                                          //message:@"Double press the touch area to switch between cursor & scroll mode.\nPress the touch area while in cursor mode to click.\nPress the Menu button to navigate back.\nPress the Play/Pause button for a URL bar.\nDouble tap the Play/Pause button or Menu button for more options."
+                                          message:@"Double press the touch area to switch between cursor & scroll mode.\nPress the touch area while in cursor mode to click.\nSingle tap the Play/Pause button to: Navigate Back, enter URL or Reload Page.\nDouble tap the Play/Pause to show the Advanced Menu with more options."
                                           preferredStyle:UIAlertControllerStyleAlert];
     
     UIAlertAction *hideForeverAction = [UIAlertAction
@@ -911,6 +962,7 @@ typedef struct _Input
 -(void)pressesEnded:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event
 {
     
+    
     if (presses.anyObject.type == UIPressTypeMenu)
     {
         UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
@@ -918,12 +970,18 @@ typedef struct _Input
         {
             [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
         }
+        else
+        {
+            //UIControl().sendAction(#selector(NSURLSessionTask.suspend), to: UIApplication.sharedApplication(), forEvent: nil);
+            exit(EXIT_SUCCESS);
+        }
+        /*
         else if ([self.webview canGoBack]) {
             [self.webview goBack];
         }
         else {
             [self requestURLorSearchInput];
-        }
+        }*/
         
     }
     else if (presses.anyObject.type == UIPressTypeUpArrow)
