@@ -39,6 +39,12 @@ typedef struct _Input
 
 @end
 
+// The Managed app configuration dictionary pushed down from an MDM server are stored in this key.
+static NSString * const kConfigurationKey = @"com.apple.configuration.managed";
+// This application allows for a home page url to be configured via MDM
+static NSString * const kConfigurationHomePageURLKey = @"homePageURL";
+static NSString * const kConfigurationnativeResolutionKey = @"useNativeResolution";
+
 @implementation ViewController {
     UITapGestureRecognizer *touchSurfaceDoubleTapRecognizer;
     UITapGestureRecognizer *playPauseOrMenuDoubleTapRecognizer;
@@ -119,7 +125,24 @@ typedef struct _Input
     //[self.view addSubview: self.webview];
     [self.browserContainerView addSubview: self.webview];
 
-    [self.webview setFrame:self.view.frame];
+    BOOL useNative = [[NSUserDefaults standardUserDefaults] boolForKey: @"useNativeResolution"];
+    if(useNative)
+    {
+        UIScreen * mainScreen = [UIScreen mainScreen];
+        [self.webview setFrame: mainScreen.nativeBounds];
+        UIView * wbview = self.webview;
+        CGFloat scaleFactor = 1.0/mainScreen.nativeScale;
+        CGAffineTransform scale = CGAffineTransformMakeScale(scaleFactor, scaleFactor);
+        CGFloat translateWidth = mainScreen.bounds.size.width - mainScreen.nativeBounds.size.width;
+        CGFloat translateHeight = mainScreen.bounds.size.height - mainScreen.nativeBounds.size.height;
+        CGAffineTransform translation = CGAffineTransformMakeTranslation(translateWidth,translateHeight);
+        wbview.transform = CGAffineTransformConcat(translation, scale);
+    }
+    else
+    {
+         [self.webview setFrame: self.view.frame];
+    }
+   
     [self.webview setDelegate:self];
     [self.webview setLayoutMargins:UIEdgeInsetsZero];
     UIScrollView *scrollView = [self.webview scrollView];
@@ -127,7 +150,6 @@ typedef struct _Input
     if (@available(tvOS 11.0, *)) {
         scrollView.insetsLayoutMarginsFromSafeArea = false;
     }
-    
     topMenuBrowserOffset = self.topMenuView.frame.size.height;
     //scrollView.contentOffset = CGPointMake(0, topHeight);
     scrollView.contentOffset = CGPointZero;
@@ -164,6 +186,17 @@ typedef struct _Input
     }
 }
 -(void)viewDidLoad {
+    // Add Notification Center observer to be alerted of any change to NSUserDefaults.
+    // Managed app configuration changes pushed down from an MDM server appear in NSUSerDefaults.
+    [[NSNotificationCenter defaultCenter] addObserverForName:NSUserDefaultsDidChangeNotification
+                                                      object:nil
+                                                       queue:[NSOperationQueue mainQueue]
+                                                  usingBlock:^(NSNotification *note) {
+                                                      [self readMDMConfig];
+                                                  }];
+    
+    // Call readDefaultsValues to make sure default values are read at least once.
+    [self readMDMConfig];
     self.automaticallyAdjustsScrollViewInsets = NO;
     self.definesPresentationContext = YES;
     
@@ -586,6 +619,28 @@ typedef struct _Input
                                                    [self.webview setScalesPageToFit:NO];
                                                    [self.webview reload];
                                                }];
+    
+    UIAlertAction *useNativeResolution = [UIAlertAction
+                                           actionWithTitle:@"Use Native Resolution"
+                                           style:UIAlertActionStyleDefault
+                                           handler:^(UIAlertAction *action)
+                                           {
+                                               [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"useNativeResolution"];
+                                               [[NSUserDefaults standardUserDefaults] synchronize];
+                                               [self initWebView];
+                                               [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString: self->previousURL]]];
+                                           }];
+    UIAlertAction *stopUseNativeResolution = [UIAlertAction
+                                               actionWithTitle:@"Stop Using Native Resolution"
+                                               style:UIAlertActionStyleDefault
+                                               handler:^(UIAlertAction *action)
+                                               {
+                                                   [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"useNativeResolution"];
+                                                   [[NSUserDefaults standardUserDefaults] synchronize];
+                                                   [self initWebView];
+                                                   [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString: self->previousURL]]];
+                                               }];
+    
     UIAlertAction *disableOffsetCorrectionAction = [UIAlertAction
                                                     actionWithTitle:@"Stop Correcting Offset"
                                                     style:UIAlertActionStyleDefault
@@ -691,6 +746,12 @@ typedef struct _Input
         [alertController addAction:stopScalePageToFitAction];
     } else {
         [alertController addAction:scalePageToFitAction];
+    }
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"useNativeResolution"] ) {
+        [alertController addAction:stopUseNativeResolution];
+    } else {
+        [alertController addAction:useNativeResolution];
     }
     
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
@@ -1382,9 +1443,44 @@ typedef struct _Input
         // We only use one touch, break the loop
         break;
     }
+}
+- (void)readMDMConfig {
+    NSLog(@"Reading MDM Config");
+    NSDictionary *serverConfig = [[NSUserDefaults standardUserDefaults] dictionaryForKey:kConfigurationKey];
+    for(NSString *key in [serverConfig allKeys]) {
+        NSLog(@"key: %@ value: %@",key, [serverConfig objectForKey:key]);
+    }
+    NSString *homePageURL = serverConfig[kConfigurationHomePageURLKey];
+    NSLog(@"homePageURL: %@", homePageURL);
+    if (homePageURL && [homePageURL isKindOfClass:[NSString class]]) {
+        if([[NSUserDefaults standardUserDefaults] stringForKey:@"homepage"] == homePageURL)
+        {
+            //Do nothing since we dont want to create a recursive loop that constantly sets the NSUserdefaults
+        }
+        else
+        {
+            [[NSUserDefaults standardUserDefaults] setObject: homePageURL forKey:@"homepage"];
+        }
+        
+    }
+    else {
+
+    }
+    
+    NSString *useNativeResolution = serverConfig[kConfigurationnativeResolutionKey];
+    NSLog(@"useNativeResolution: %@", useNativeResolution);
+    if (useNativeResolution && [useNativeResolution isKindOfClass:[NSNumber class]]) {
+        if([[NSUserDefaults standardUserDefaults] boolForKey:@"useNativeResolution"] == [useNativeResolution boolValue])
+        {
+            //Do nothing since we dont want to create a recursive loop that constantly sets the NSUserdefaults
+        }
+        else
+        {
+            [[NSUserDefaults standardUserDefaults] setBool: useNativeResolution forKey: @"useNativeResolution"];
+        }
+    }
+    
+    [[NSUserDefaults standardUserDefaults] synchronize];
     
 }
-
-
-
 @end
