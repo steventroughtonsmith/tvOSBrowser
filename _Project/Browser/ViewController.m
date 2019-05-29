@@ -1099,7 +1099,7 @@ typedef struct _Input
             return;
         }
         
-        [self requestURLorSearchInput];
+        [self showInputURLorSearchGoogle];
         
     }
     
