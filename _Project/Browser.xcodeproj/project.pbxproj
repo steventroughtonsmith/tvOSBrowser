@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3A2A7C1621E7805D0083CB13 /* go-back-left-arrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 3A2A7C1121E7805D0083CB13 /* go-back-left-arrow.png */; };
+		3A2A7C1721E7805D0083CB13 /* house-outline.png in Resources */ = {isa = PBXBuildFile; fileRef = 3A2A7C1221E7805D0083CB13 /* house-outline.png */; };
+		3A2A7C1821E7805D0083CB13 /* right-arrow-forward.png in Resources */ = {isa = PBXBuildFile; fileRef = 3A2A7C1321E7805D0083CB13 /* right-arrow-forward.png */; };
+		3A2A7C1921E7805D0083CB13 /* refresh-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 3A2A7C1421E7805D0083CB13 /* refresh-button.png */; };
+		3A2A7C1A21E7805E0083CB13 /* maximize-2.png in Resources */ = {isa = PBXBuildFile; fileRef = 3A2A7C1521E7805D0083CB13 /* maximize-2.png */; };
+		3A2A7C1C21E783D00083CB13 /* menu-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 3A2A7C1B21E783D00083CB13 /* menu-button.png */; };
+		3A2A7C1E21E7842F0083CB13 /* menu-2.png in Resources */ = {isa = PBXBuildFile; fileRef = 3A2A7C1D21E7842E0083CB13 /* menu-2.png */; };
+		3A2A7C2021E784760083CB13 /* resize-arrows.png in Resources */ = {isa = PBXBuildFile; fileRef = 3A2A7C1F21E784760083CB13 /* resize-arrows.png */; };
 		9675E1FC20855F6500A4A84A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9675E1FB20855F6500A4A84A /* Foundation.framework */; };
 		9675E1FF20857AEF00A4A84A /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9675E1FE20857AEF00A4A84A /* UIKit.framework */; };
 		B002B8671BAE420500C744AF /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B002B8661BAE420500C744AF /* main.m */; };
@@ -17,6 +25,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3A2A7C1121E7805D0083CB13 /* go-back-left-arrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "go-back-left-arrow.png"; sourceTree = "<group>"; };
+		3A2A7C1221E7805D0083CB13 /* house-outline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "house-outline.png"; sourceTree = "<group>"; };
+		3A2A7C1321E7805D0083CB13 /* right-arrow-forward.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "right-arrow-forward.png"; sourceTree = "<group>"; };
+		3A2A7C1421E7805D0083CB13 /* refresh-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "refresh-button.png"; sourceTree = "<group>"; };
+		3A2A7C1521E7805D0083CB13 /* maximize-2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "maximize-2.png"; sourceTree = "<group>"; };
+		3A2A7C1B21E783D00083CB13 /* menu-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menu-button.png"; sourceTree = "<group>"; };
+		3A2A7C1D21E7842E0083CB13 /* menu-2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menu-2.png"; sourceTree = "<group>"; };
+		3A2A7C1F21E784760083CB13 /* resize-arrows.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "resize-arrows.png"; sourceTree = "<group>"; };
 		9675E1FB20855F6500A4A84A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		9675E1FE20857AEF00A4A84A /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		B002B8621BAE420500C744AF /* Browser.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Browser.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,6 +60,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3A2A7C0621E77E2C0083CB13 /* MenuIcons */ = {
+			isa = PBXGroup;
+			children = (
+				3A2A7C1D21E7842E0083CB13 /* menu-2.png */,
+				3A2A7C1F21E784760083CB13 /* resize-arrows.png */,
+				3A2A7C1B21E783D00083CB13 /* menu-button.png */,
+				3A2A7C1121E7805D0083CB13 /* go-back-left-arrow.png */,
+				3A2A7C1221E7805D0083CB13 /* house-outline.png */,
+				3A2A7C1521E7805D0083CB13 /* maximize-2.png */,
+				3A2A7C1421E7805D0083CB13 /* refresh-button.png */,
+				3A2A7C1321E7805D0083CB13 /* right-arrow-forward.png */,
+			);
+			name = MenuIcons;
+			path = ../../Icons/MenuIcons;
+			sourceTree = "<group>";
+		};
 		9675E1FA20855F6500A4A84A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -78,6 +110,7 @@
 				B002B8691BAE420500C744AF /* AppDelegate.m */,
 				B002B86B1BAE420500C744AF /* ViewController.h */,
 				B002B86C1BAE420500C744AF /* ViewController.m */,
+				3A2A7C0621E77E2C0083CB13 /* MenuIcons */,
 				B002B8651BAE420500C744AF /* Supporting Files */,
 			);
 			path = Browser;
@@ -126,7 +159,7 @@
 				TargetAttributes = {
 					B002B8611BAE420500C744AF = {
 						CreatedOnToolsVersion = 7.1;
-						DevelopmentTeam = NKQ4HJ66PX;
+						DevelopmentTeam = R2HYQQ4QDF;
 					};
 				};
 			};
@@ -153,8 +186,16 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A2A7C1C21E783D00083CB13 /* menu-button.png in Resources */,
+				3A2A7C2021E784760083CB13 /* resize-arrows.png in Resources */,
 				B002B8721BAE420500C744AF /* Assets.xcassets in Resources */,
 				B002B8701BAE420500C744AF /* Main.storyboard in Resources */,
+				3A2A7C1821E7805D0083CB13 /* right-arrow-forward.png in Resources */,
+				3A2A7C1E21E7842F0083CB13 /* menu-2.png in Resources */,
+				3A2A7C1621E7805D0083CB13 /* go-back-left-arrow.png in Resources */,
+				3A2A7C1921E7805D0083CB13 /* refresh-button.png in Resources */,
+				3A2A7C1A21E7805E0083CB13 /* maximize-2.png in Resources */,
+				3A2A7C1721E7805D0083CB13 /* house-outline.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -309,12 +350,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = R2HYQQ4QDF;
 				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = YES;
 				ENABLE_ON_DEMAND_RESOURCES = NO;
 				FRAMEWORK_SEARCH_PATHS = "";
 				INFOPLIST_FILE = Browser/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.Moballo.tvbrowser;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jva.tvbrowser;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = NO;
 				TVOS_DEPLOYMENT_TARGET = 9.0;
@@ -329,12 +371,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = R2HYQQ4QDF;
 				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = YES;
 				ENABLE_ON_DEMAND_RESOURCES = NO;
 				FRAMEWORK_SEARCH_PATHS = "";
 				INFOPLIST_FILE = Browser/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.Moballo.tvbrowser;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jva.tvbrowser;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = NO;
 				TVOS_DEPLOYMENT_TARGET = 9.0;
