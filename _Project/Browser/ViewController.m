@@ -81,6 +81,11 @@ typedef struct _Input
     [super viewDidAppear:animated];
     //loadingSpinner.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
     [self webViewDidAppear];
+    
+    
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DontShowHintsOnLaunch"] && !_displayedHintsOnLaunch) {
+        [self showHintsAlert];
+    }
     _displayedHintsOnLaunch = YES;
 }
 -(void)webViewDidAppear {
@@ -92,9 +97,6 @@ typedef struct _Input
     else if ([self.webview request] == nil) {
         //[self requestURLorSearchInput];
         [self loadHomePage];
-    }
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DontShowHintsOnLaunch"] && !_displayedHintsOnLaunch) {
-        [self showHintsAlert];
     }
 }
 -(void)loadHomePage {
@@ -179,8 +181,7 @@ typedef struct _Input
     
     playPauseOrMenuDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleDoubleTapMenuOrPlayPause:)];
     playPauseOrMenuDoubleTapRecognizer.numberOfTapsRequired = 2;
-    //playPauseOrMenuDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause], [NSNumber numberWithInteger:UIPressTypeMenu]];
-    playPauseOrMenuDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause]];
+    playPauseOrMenuDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause], [NSNumber numberWithInteger:UIPressTypeMenu]];
 
     [self.view addGestureRecognizer:playPauseOrMenuDoubleTapRecognizer];
     
@@ -192,7 +193,7 @@ typedef struct _Input
     
     
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
-    longPress.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause]];
+    longPress.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause], [NSNumber numberWithInteger:UIPressTypeMenu]];
     [self.view addGestureRecognizer:longPress];
     
     
@@ -216,6 +217,16 @@ typedef struct _Input
     self.cursorMode = YES;
     cursorView.hidden = NO;
     self.textFontSize = 100;
+    
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"HideTopMenuBar"]) {
+        [self hideTopNav];
+    }
+}
+
+-(void)saveTopNavHiddenStatus:(bool)status
+{
+    [[NSUserDefaults standardUserDefaults] setBool:status forKey:@"HideTopMenuBar"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 -(void)hideTopNav
@@ -278,6 +289,7 @@ typedef struct _Input
                                          style:UIAlertActionStyleDefault
                                          handler:^(UIAlertAction *action)
                                          {
+                                             [self saveTopNavHiddenStatus: YES];
                                              [self hideTopNav];
                                          }];
     }
@@ -288,6 +300,7 @@ typedef struct _Input
                                        style:UIAlertActionStyleDefault
                                        handler:^(UIAlertAction *action)
                                        {
+                                           [self saveTopNavHiddenStatus: NO];
                                            [self showTopNav];
                                        }];
     }
@@ -802,22 +815,25 @@ typedef struct _Input
                                        }
                                    }];
     
-    [alertController2 addAction:searchAction];
-    [alertController2 addAction:goAction];
-    
-    [self presentViewController:alertController2 animated:YES completion:nil];
-    
-    NSURLRequest *request = [self.webview request];
+    UIAlertAction *cancelAction = [UIAlertAction
+                                   actionWithTitle:@"Cancel"
+                                   style:UIAlertActionStyleCancel
+                                   handler:^(UIAlertAction *action)
+                                   {
+                                   }];
 
     
-    if (request == nil) {
-        UITextField *loginTextField = alertController2.textFields[0];
-        [loginTextField becomeFirstResponder];
-    }
-    else if (![request.URL.absoluteString  isEqual: @""]) {
-        UITextField *loginTextField = alertController2.textFields[0];
-        [loginTextField becomeFirstResponder];
-    }
+    [alertController2 addAction:searchAction];
+    [alertController2 addAction:goAction];
+    [alertController2 addAction:cancelAction];
+    
+    [self presentViewController:alertController2 animated:YES completion:^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            UITextField *urltextfield = alertController2.textFields[0];
+            [urltextfield becomeFirstResponder];
+        });
+        
+    }];
     
     
     
@@ -1036,71 +1052,76 @@ typedef struct _Input
 }
 - (void)alertTextFieldShouldReturn:(UITextField *)sender
 {
-    /*
-     _inputViewVisible = NO;
-     UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
-     if (alertController)
-     {
-     [alertController dismissViewControllerAnimated:true completion:nil];
-     if ([temporaryURL containsString:@" "] || ![temporaryURL containsString:@"."]) {
-     temporaryURL = [temporaryURL stringByReplacingOccurrencesOfString:@" " withString:@"+"];
-     temporaryURL = [temporaryURL stringByReplacingOccurrencesOfString:@"." withString:@"+"];
-     temporaryURL = [temporaryURL stringByReplacingOccurrencesOfString:@"++" withString:@"+"];
-     temporaryURL = [temporaryURL stringByReplacingOccurrencesOfString:@"++" withString:@"+"];
-     temporaryURL = [temporaryURL stringByReplacingOccurrencesOfString:@"++" withString:@"+"];
-     temporaryURL = [temporaryURL stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-     if (temporaryURL != nil) {
-     [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", temporaryURL]]]];
-     }
-     else {
-     [self requestURLorSearchInput];
-     }
-     temporaryURL = nil;
-     }
-     else {
-     if (temporaryURL != nil) {
-     if ([temporaryURL containsString:@"http://"] || [temporaryURL containsString:@"https://"]) {
-     [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@", temporaryURL]]]];
-     temporaryURL = nil;
-     }
-     else {
-     [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://%@", temporaryURL]]]];
-     temporaryURL = nil;
-     }
-     }
-     else {
-     [self requestURLorSearchInput];
-     }
-     }
-     
-     }
-     */
+    [sender resignFirstResponder];
+    
+    UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
+    if (alertController)
+    {
+        [alertController becomeFirstResponder];
+    }
 }
+
+- (id)findFirstResponder
+{
+    if (self.isFirstResponder) {
+        return self;
+    }
+    for (UIView *subView in self.view.subviews) {
+        if ([subView isFirstResponder]) {
+            return subView;
+        }
+    }
+    return nil;
+}
+
 -(void)pressesEnded:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event
 {
     
     
     if (presses.anyObject.type == UIPressTypeMenu)
     {
-        UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
-        if (alertController)
+        UIView *firstRes = [self findFirstResponder];
+        
+        if(firstRes != nil && [firstRes isKindOfClass:[UITextField class]]) {
+            [firstRes endEditing:YES];
+            return;
+        }
+        
+        UIViewController *vc = (UIViewController *)self.presentedViewController;
+        if (vc)
         {
             [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
+            return;
         }
-        else
-        {
-            //UIControl().sendAction(#selector(NSURLSessionTask.suspend), to: UIApplication.sharedApplication(), forEvent: nil);
-            exit(EXIT_SUCCESS);
-        }
-        /*
-        else if ([self.webview canGoBack]) {
+        
+        if ([self.webview canGoBack]) {
             [self.webview goBack];
+            return;
         }
-        else {
-            [self requestURLorSearchInput];
-        }*/
+        
+        [self requestURLorSearchInput];
         
     }
+    
+    else if (presses.anyObject.type == UIPressTypePlayPause)
+    {
+        UIView *firstRes = [self findFirstResponder];
+        
+        if(firstRes != nil && [firstRes isKindOfClass:[UITextField class]]) {
+            [firstRes endEditing:YES];
+            return;
+        }
+        
+        UIViewController *vc = (UIViewController *)self.presentedViewController;
+        if (vc)
+        {
+            [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
+            return;
+        }
+        
+        [self requestURLorSearchInput];
+    }
+    
     else if (presses.anyObject.type == UIPressTypeUpArrow)
     {
         // Zoom testing (needs work) (requires old remote for up arrow)
@@ -1161,10 +1182,13 @@ typedef struct _Input
                 {
                     // Hide/show top bar:
                     
-                    if(topMenuShowing)
+                    if(topMenuShowing) {
+                        [self saveTopNavHiddenStatus: false];
                         [self hideTopNav];
-                    else
+                    } else {
+                        [self saveTopNavHiddenStatus: false];
                         [self showTopNav];
+                    }
                 }
                 
                 CGRect menuBtnFrameExtra = self.btnImgMenu.frame;
@@ -1299,11 +1323,12 @@ typedef struct _Input
                     }
                 }
                 [alertController addAction:cancelAction];
-                [self presentViewController:alertController animated:YES completion:nil];
-                UITextField *inputViewTextField = alertController.textFields[0];
-                if ([[inputViewTextField.text stringByReplacingOccurrencesOfString:@" " withString:@""] isEqualToString:@""]) {
-                    [inputViewTextField becomeFirstResponder];
-                }
+                [self presentViewController:alertController animated:YES completion:^{
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                        UITextField *inputViewTextField = alertController.textFields[0];
+                        [inputViewTextField becomeFirstResponder];
+                    });
+                }];
             }
             else {
                 //[self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).click()", (int)point.x, (int)point.y]];
@@ -1311,18 +1336,6 @@ typedef struct _Input
             //[self toggleMode];
                 
             }
-        }
-    }
-    
-    else if (presses.anyObject.type == UIPressTypePlayPause)
-    {
-        UIAlertController *alertController = (UIAlertController *)self.presentedViewController;
-        if (alertController)
-        {
-            [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
-        }
-        else {
-            [self requestURLorSearchInput];
         }
     }
 }
