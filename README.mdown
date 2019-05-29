@@ -1,5 +1,4 @@
-tvOS Browser:
-The advanced web browser for AppleTV
+tvOS Browser
 =============
 
 ![Alt text](/screen01.jpg?raw=true "tvOS Browser on AppleTV")
@@ -26,8 +25,11 @@ Quick start:
 - Press the touch area while in cursor mode to click.
 - Single tap the Play/Pause button to show the Quick Menu, with: input URLs, search Google, reload the page, or navigate back.
 - Double tap the Play/Pause button to: display the Advanced Menu, with: Favorites, History, set/open homepage, change user agent, clear cache, and clear cookies and more.
+- Single tap the Menu button to "go back" (like the back button in a traditional browser)
+- Single tap the TV button (to the rigtht of the Menu button) to exit
 
 The Avanced menu lets you:
+- Show and hide the top navigation bar
 - Manage Favorites
 - Manage History
 - Go to Home page
