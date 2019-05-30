@@ -109,12 +109,12 @@ typedef struct _Input
 }
 -(void)initWebView {
     if (@available(tvOS 11.0, *)) {
-        self.view.insetsLayoutMarginsFromSafeArea = false;
+        self.view.insetsLayoutMarginsFromSafeArea = NO;
         self.additionalSafeAreaInsets = UIEdgeInsetsZero;
     }
     self.webview = [[NSClassFromString(@"UIWebView") alloc] init];
-    [self.webview setTranslatesAutoresizingMaskIntoConstraints:false];
-    [self.webview setClipsToBounds:false];
+    [self.webview setTranslatesAutoresizingMaskIntoConstraints:NO];
+    [self.webview setClipsToBounds:NO];
     
     //[self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.google.com"]]];
     
@@ -127,7 +127,7 @@ typedef struct _Input
     UIScrollView *scrollView = [self.webview scrollView];
     [scrollView setLayoutMargins:UIEdgeInsetsZero];
     if (@available(tvOS 11.0, *)) {
-        scrollView.insetsLayoutMarginsFromSafeArea = false;
+        scrollView.insetsLayoutMarginsFromSafeArea = NO;
     }
     
     topMenuBrowserOffset = self.topMenuView.frame.size.height;
@@ -206,7 +206,7 @@ typedef struct _Input
     loadingSpinner.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
     loadingSpinner.tintColor = [UIColor blackColor];*/
     
-    self.loadingSpinner.hidesWhenStopped = true;
+    self.loadingSpinner.hidesWhenStopped = YES;
     
     //[loadingSpinner startAnimating];
     //[self.view addSubview:loadingSpinner];
@@ -1090,7 +1090,7 @@ typedef struct _Input
         UIViewController *vc = (UIViewController *)self.presentedViewController;
         if (vc)
         {
-            [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
+            [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
             return;
         }
         
@@ -1115,7 +1115,7 @@ typedef struct _Input
         UIViewController *vc = (UIViewController *)self.presentedViewController;
         if (vc)
         {
-            [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
+            [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
             return;
         }
         
@@ -1183,10 +1183,10 @@ typedef struct _Input
                     // Hide/show top bar:
                     
                     if(topMenuShowing) {
-                        [self saveTopNavHiddenStatus: false];
+                        [self saveTopNavHiddenStatus: YES];
                         [self hideTopNav];
                     } else {
-                        [self saveTopNavHiddenStatus: false];
+                        [self saveTopNavHiddenStatus: NO];
                         [self showTopNav];
                     }
                 }
