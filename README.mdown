@@ -1,5 +1,5 @@
 tvOS Browser:
-The advanced web browser for AppleTV
+Web browser for AppleTV
 =============
 
 ![Alt text](/screen01.jpg?raw=true "tvOS Browser on AppleTV")
