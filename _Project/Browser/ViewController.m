@@ -434,12 +434,13 @@ typedef struct _Input
                                                                                                                       style:UIAlertActionStyleDestructive
                                                                                                                       handler:^(UIAlertAction *action)
                                                                                                                       {
-                                                                                                                          UITextField *urltextfield = favoritesAddToController.textFields[0];
-                                                                                                                          NSString *toMod = urltextfield.text;
-                                                                                                                          if ([toMod isEqualToString:@""]) {
-                                                                                                                              toMod = currentURL;
+                                                                                                                          UITextField *titleTextField = favoritesAddToController.textFields[0];
+                                                                                                                          NSString *savedTitle = titleTextField.text;
+                                                                                                                          if ([savedTitle isEqualToString:@""]) {
+                                                                                                                              // Use raw URL if no title
+                                                                                                                              savedTitle = currentURL;
                                                                                                                           }
-                                                                                                                          NSArray *toSaveItem = [NSArray arrayWithObjects:toMod, theTitle, nil];
+                                                                                                                          NSArray *toSaveItem = [NSArray arrayWithObjects:currentURL, savedTitle, nil];
                                                                                                                           NSMutableArray *historyArray = [NSMutableArray arrayWithObjects:toSaveItem, nil];
                                                                                                                           if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"FAVORITES"] != nil) {
                                                                                                                               historyArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:@"FAVORITES"] mutableCopy];
@@ -460,20 +461,19 @@ typedef struct _Input
                                               if (indexableArray != nil) {
                                                   for (int i = 0; i < [indexableArray count]; i++) {
                                                       NSString *objectTitle = indexableArray[i][1];
-                                                      NSString *objectSubtitle = indexableArray[i][0];
-                                                      if (![[objectSubtitle stringByReplacingOccurrencesOfString:@" " withString:@""] isEqualToString: @""]) {
-                                                          if ([[objectTitle stringByReplacingOccurrencesOfString:@" " withString:@""] isEqualToString: @""]) {
-                                                              objectTitle = objectSubtitle;
-                                                          }
-                                                          UIAlertAction *favoriteItem = [UIAlertAction
-                                                                                         actionWithTitle:objectTitle
-                                                                                         style:UIAlertActionStyleDefault
-                                                                                         handler:^(UIAlertAction *action)
-                                                                                         {
-                                                                                             [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString: indexableArray[i][0]]]];
-                                                                                         }];
-                                                          [historyAlertController addAction:favoriteItem];
+                                                      NSString *objectURL = indexableArray[i][0];
+                                                      if ([[objectTitle stringByReplacingOccurrencesOfString:@" " withString:@""] isEqualToString: @""]) {
+                                                          // Use raw URL if no title
+                                                          objectTitle = objectURL;
                                                       }
+                                                      UIAlertAction *favoriteItem = [UIAlertAction
+                                                                                     actionWithTitle:objectTitle
+                                                                                     style:UIAlertActionStyleDefault
+                                                                                     handler:^(UIAlertAction *action)
+                                                                                     {
+                                                                                         [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString: objectURL]]];
+                                                                                     }];
+                                                      [historyAlertController addAction:favoriteItem];
                                                   }
                                               }
                                               if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"FAVORITES"] != nil) {
