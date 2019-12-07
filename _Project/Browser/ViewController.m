@@ -24,6 +24,23 @@ static UIColor *kTextColor() {
     }
 }
 
+static UIImage *kDefaultCursor() {
+    static UIImage *image;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        image = [UIImage imageNamed:@"Cursor"];
+    });
+    return image;
+}
+
+static UIImage *kFingerCursor() {
+    static UIImage *image;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        image = [UIImage imageNamed:@"Finger"];
+    });
+    return image;
+}
 
 @interface ViewController ()
 {
@@ -195,7 +212,7 @@ static UIColor *kTextColor() {
     
     cursorView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
     cursorView.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
-    cursorView.image = [UIImage imageNamed:@"Cursor"];
+    cursorView.image = kDefaultCursor();
     cursorView.backgroundColor = [UIColor clearColor];
     cursorView.hidden = YES;
     
@@ -1412,6 +1429,32 @@ static UIColor *kTextColor() {
             
             cursorView.frame = rect;
             self.lastTouchLocation = location;
+        }
+        
+        // Try to make mouse cursor become finger icon when pointer element is clickable
+        if (self.cursorMode) {
+            CGPoint point = [self.view convertPoint:cursorView.frame.origin toView:self.webview];
+            if(topMenuShowing == YES && point.y < topMenuBrowserOffset) {
+                return;
+            }
+            
+            point.y = point.y - topMenuBrowserOffset;
+            
+            int displayWidth = [[self.webview stringByEvaluatingJavaScriptFromString:@"window.innerWidth"] intValue];
+            CGFloat scale = [self.webview frame].size.width / displayWidth;
+            
+            point.x /= scale;
+            point.y /= scale;
+            
+            // Seems not so low, check everytime when touchesMoved
+            NSString *containsLink = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).closest('a, input') !== null", (int)point.x, (int)point.y]];
+            if ([containsLink isEqualToString:@"true"]) {
+                cursorView.image = kFingerCursor();
+            } else {
+                cursorView.image = kDefaultCursor();
+            }
+        } else {
+            cursorView.image = kDefaultCursor();
         }
         
         // We only use one touch, break the loop
