@@ -217,11 +217,6 @@ static UIImage *kFingerCursor() {
     cursorView.hidden = YES;
     
     
-    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
-    longPress.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause]];
-    [self.view addGestureRecognizer:longPress];
-    
-    
     [self.view addSubview:cursorView];
     
     
@@ -1376,24 +1371,6 @@ static UIImage *kFingerCursor() {
         else {
             [self requestURLorSearchInput];
         }
-    }
-}
-- (void)longPress:(UILongPressGestureRecognizer*)gesture {
-    if ( gesture.state == UIGestureRecognizerStateBegan) {
-        //[self toggleMode];
-        /*
-         //if ([self.webview.scrollView zoomScale] != 1.0) {
-         if (![[self.webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom;"]  isEqual: @"1.0"]) {
-         [self.webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom = 1.0;"];
-         }
-         else {
-         [self.webview stringByEvaluatingJavaScriptFromString:@"document. body.style.zoom = 5.0;"];
-         }
-         */
-        
-    }
-    else if ( gesture.state == UIGestureRecognizerStateEnded) {
-        //[self toggleMode];
     }
 }
 
