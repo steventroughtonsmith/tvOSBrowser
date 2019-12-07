@@ -58,13 +58,12 @@ static UIImage *kFingerCursor() {
 @property BOOL scrollViewAllowBounces;
 @property CGPoint lastTouchLocation;
 @property NSUInteger textFontSize;
+@property UITapGestureRecognizer *touchSurfaceDoubleTapRecognizer;
+@property UITapGestureRecognizer *playPauseDoubleTapRecognizer;
 
 @end
 
-@implementation ViewController {
-    UITapGestureRecognizer *touchSurfaceDoubleTapRecognizer;
-    UITapGestureRecognizer *playPauseOrMenuDoubleTapRecognizer;
-}
+@implementation ViewController
 @synthesize textFontSize = _textFontSize;
 -(void) webViewDidStartLoad:(id)webView {
     //[self.view bringSubviewToFront:loadingSpinner];
@@ -198,17 +197,16 @@ static UIImage *kFingerCursor() {
     [self initWebView];
     _scrollViewAllowBounces = YES;
     [super viewDidLoad];
-    touchSurfaceDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleTouchSurfaceDoubleTap:)];
-    touchSurfaceDoubleTapRecognizer.numberOfTapsRequired = 2;
-    touchSurfaceDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypeSelect]];
-    [self.view addGestureRecognizer:touchSurfaceDoubleTapRecognizer];
+    self.touchSurfaceDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleTouchSurfaceDoubleTap:)];
+    self.touchSurfaceDoubleTapRecognizer.numberOfTapsRequired = 2;
+    self.touchSurfaceDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypeSelect]];
+    [self.view addGestureRecognizer:self.touchSurfaceDoubleTapRecognizer];
     
-    playPauseOrMenuDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleDoubleTapMenuOrPlayPause:)];
-    playPauseOrMenuDoubleTapRecognizer.numberOfTapsRequired = 2;
-    //playPauseOrMenuDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause], [NSNumber numberWithInteger:UIPressTypeMenu]];
-    playPauseOrMenuDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause]];
+    self.playPauseDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handlePlayPauseDoubleTap:)];
+    self.playPauseDoubleTapRecognizer.numberOfTapsRequired = 2;
+    self.playPauseDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypePlayPause]];
 
-    [self.view addGestureRecognizer:playPauseOrMenuDoubleTapRecognizer];
+    [self.view addGestureRecognizer:self.playPauseDoubleTapRecognizer];
     
     cursorView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
     cursorView.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
@@ -756,7 +754,7 @@ static UIImage *kFingerCursor() {
 }
 
 
--(void)handleDoubleTapMenuOrPlayPause:(UITapGestureRecognizer *)sender {
+-(void)handlePlayPauseDoubleTap:(UITapGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateEnded) {
         [self showAdvancedMenu];
     }
