@@ -12,6 +12,10 @@
 #import "ViewController.h"
 #import <GameController/GameController.h>
 
+#define kMaxTextFontSize 160
+#define kMinTextFontSize 50
+#define kDefaultTextFontSize 100
+
 typedef struct _Input
 {
     CGFloat x;
@@ -43,6 +47,7 @@ typedef struct _Input
     UITapGestureRecognizer *touchSurfaceDoubleTapRecognizer;
     UITapGestureRecognizer *playPauseOrMenuDoubleTapRecognizer;
 }
+@synthesize textFontSize = _textFontSize;
 -(void) webViewDidStartLoad:(id)webView {
     //[self.view bringSubviewToFront:loadingSpinner];
     if (![previousURL isEqualToString:requestURL]) {
@@ -215,7 +220,33 @@ typedef struct _Input
     //ENABLE CURSOR MODE INITIALLY
     self.cursorMode = YES;
     cursorView.hidden = NO;
-    self.textFontSize = 100;
+}
+
+#pragma mark - FontSize
+- (NSUInteger)textFontSize {
+    if (_textFontSize == 0) {
+        NSNumber *textFontSizeValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"TextFontSize"];
+        if (textFontSizeValue != nil) {
+            // Limit font size
+            NSUInteger textFontSize = textFontSizeValue.unsignedIntegerValue;
+            _textFontSize = MIN(kMaxTextFontSize, MAX(kMinTextFontSize, textFontSize));
+        } else {
+            // Default font size
+            _textFontSize = kDefaultTextFontSize;
+        }
+    }
+    return _textFontSize;
+}
+
+- (void)setTextFontSize:(NSUInteger)textFontSize {
+    if (textFontSize == _textFontSize) {
+        return;
+    }
+    // Limit font size
+    textFontSize = MIN(kMaxTextFontSize, MAX(kMinTextFontSize, textFontSize));
+    _textFontSize = textFontSize;
+    [[NSUserDefaults standardUserDefaults] setObject:@(textFontSize) forKey:@"TextFontSize"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 -(void)hideTopNav
@@ -612,7 +643,7 @@ typedef struct _Input
                                              style:UIAlertActionStyleDefault
                                              handler:^(UIAlertAction *action)
                                              {
-                                                 self.textFontSize = (self.textFontSize < 160) ? self.textFontSize +5 : self.textFontSize;
+                                                 self.textFontSize += 5;
                                                  
                                                  NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
                                                                        (unsigned long)self.textFontSize];
@@ -624,7 +655,7 @@ typedef struct _Input
                                              style:UIAlertActionStyleDefault
                                              handler:^(UIAlertAction *action)
                                              {
-                                                 self.textFontSize = (self.textFontSize > 50) ? self.textFontSize -5 : self.textFontSize;
+                                                 self.textFontSize -= 5;
                                                  
                                                  NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
                                                                        (unsigned long)self.textFontSize];
