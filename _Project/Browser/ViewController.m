@@ -871,12 +871,12 @@ typedef struct _Input
     
     
     
-    UIAlertAction *backAction = [UIAlertAction
-                                   actionWithTitle:@"Navigate Back"
+    UIAlertAction *forwardAction = [UIAlertAction
+                                   actionWithTitle:@"Go Forward"
                                    style:UIAlertActionStyleDefault
                                    handler:^(UIAlertAction *action)
                                    {
-                                       [self.webview goBack];
+                                       [self.webview goForward];
                                    }];
     
     
@@ -908,8 +908,8 @@ typedef struct _Input
                                   }];
     
     
-    if([self.webview canGoBack])
-        [alertController addAction:backAction];
+    if([self.webview canGoForward])
+        [alertController addAction:forwardAction];
     
     [alertController addAction:inputAction];
     
@@ -1028,8 +1028,8 @@ typedef struct _Input
 {
     UIAlertController *alertController = [UIAlertController
                                           alertControllerWithTitle:@"Usage Guide"
-                                          //message:@"Double press the touch area to switch between cursor & scroll mode.\nPress the touch area while in cursor mode to click.\nPress the Menu button to navigate back.\nPress the Play/Pause button for a URL bar.\nDouble tap the Play/Pause button or Menu button for more options."
-                                          message:@"Double press the touch area to switch between cursor & scroll mode.\nPress the touch area while in cursor mode to click.\nSingle tap the Play/Pause button to: Navigate Back, enter URL or Reload Page.\nDouble tap the Play/Pause to show the Advanced Menu with more options."
+                                          //message:@"Double press the touch area to switch between cursor & scroll mode.\nPress the touch area while in cursor mode to click.\nPress the Menu button to go forward.\nPress the Play/Pause button for a URL bar.\nDouble tap the Play/Pause button or Menu button for more options."
+                                          message:@"Double press the touch area to switch between cursor & scroll mode.\nPress the touch area while in cursor mode to click.\nSingle tap the Play/Pause button to: Go Forward, enter URL or Reload Page.\nDouble tap the Play/Pause to show the Advanced Menu with more options."
                                           preferredStyle:UIAlertControllerStyleAlert];
     
     UIAlertAction *hideForeverAction = [UIAlertAction
@@ -1118,15 +1118,19 @@ typedef struct _Input
         {
             [self.presentedViewController dismissViewControllerAnimated:true completion:nil];
         }
-        else
-        {
-            //UIControl().sendAction(#selector(NSURLSessionTask.suspend), to: UIApplication.sharedApplication(), forEvent: nil);
-            exit(EXIT_SUCCESS);
-        }
-        /*
         else if ([self.webview canGoBack]) {
             [self.webview goBack];
         }
+        else
+        {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Exit App?" message:nil preferredStyle:UIAlertControllerStyleAlert];
+            [alert addAction:[UIAlertAction actionWithTitle:@"Exit" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                exit(EXIT_SUCCESS);
+            }]];
+            [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+            [self presentViewController:alert animated:YES completion:nil];
+        }
+        /*
         else {
             [self requestURLorSearchInput];
         }*/
