@@ -16,18 +16,19 @@
 #define kMinTextFontSize 50
 #define kDefaultTextFontSize 100
 
-typedef struct _Input
-{
-    CGFloat x;
-    CGFloat y;
-} Input;
+static UIColor *kTextColor() {
+    if (@available(tvOS 13, *)) {
+        return UIColor.labelColor;
+    } else {
+        return UIColor.blackColor;
+    }
+}
 
 
 @interface ViewController ()
 {
     UIImageView *cursorView;
     //UIActivityIndicatorView *loadingSpinner;
-    Input input;
     NSString *requestURL;
     NSString *previousURL;
 }
@@ -429,8 +430,7 @@ typedef struct _Input
                                                                                               textField.keyboardType = UIKeyboardTypeDefault;
                                                                                               textField.placeholder = @"Name New Favorite";
                                                                                               textField.text = theTitle;
-                                                                                              textField.textColor = [UIColor blackColor];
-                                                                                              textField.backgroundColor = [UIColor whiteColor];
+                                                                                              textField.textColor = kTextColor();
                                                                                               [textField setReturnKeyType:UIReturnKeyDone];
                                                                                               [textField addTarget:self
                                                                                                             action:@selector(alertTextFieldShouldReturn:)
@@ -766,8 +766,7 @@ typedef struct _Input
      {
          textField.keyboardType = UIKeyboardTypeURL;
          textField.placeholder = @"Enter URL or Search Terms";
-         textField.textColor = [UIColor blackColor];
-         textField.backgroundColor = [UIColor whiteColor];
+         textField.textColor = kTextColor();
          [textField setReturnKeyType:UIReturnKeyDone];
          [textField addTarget:self
                        action:@selector(alertTextFieldShouldReturn:)
@@ -1290,8 +1289,7 @@ typedef struct _Input
                          textField.secureTextEntry = YES;
                      }
                      textField.text = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).value;", (int)point.x, (int)point.y]];
-                     textField.textColor = [UIColor blackColor];
-                     textField.backgroundColor = [UIColor whiteColor];
+                     textField.textColor = kTextColor();
                      [textField setReturnKeyType:UIReturnKeyDone];
                      [textField addTarget:self
                                    action:@selector(alertTextFieldShouldReturn:)
