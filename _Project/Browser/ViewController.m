@@ -64,6 +64,9 @@ typedef struct _Input
     
     self.lblUrlBar.text = currentURL;
     
+    // Update font size
+    [self updateTextFontSize];
+    
     NSArray *toSaveItem = [NSArray arrayWithObjects:currentURL, theTitle, nil];
     NSMutableArray *historyArray = [NSMutableArray arrayWithObjects:toSaveItem, nil];
     if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] != nil) {
@@ -247,6 +250,12 @@ typedef struct _Input
     _textFontSize = textFontSize;
     [[NSUserDefaults standardUserDefaults] setObject:@(textFontSize) forKey:@"TextFontSize"];
     [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+- (void)updateTextFontSize {
+    NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
+                          (unsigned long)self.textFontSize];
+    [self.webview stringByEvaluatingJavaScriptFromString:jsString];
 }
 
 -(void)hideTopNav
@@ -644,10 +653,7 @@ typedef struct _Input
                                              handler:^(UIAlertAction *action)
                                              {
                                                  self.textFontSize += 5;
-                                                 
-                                                 NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
-                                                                       (unsigned long)self.textFontSize];
-                                                 [self.webview stringByEvaluatingJavaScriptFromString:jsString];
+                                                 [self updateTextFontSize];
                                              }];
     
     UIAlertAction *decreaseFontSizeAction = [UIAlertAction
@@ -656,10 +662,7 @@ typedef struct _Input
                                              handler:^(UIAlertAction *action)
                                              {
                                                  self.textFontSize -= 5;
-                                                 
-                                                 NSString *jsString = [[NSString alloc] initWithFormat:@"document.getElementsByTagName('body')[0].style.webkitTextSizeAdjust= '%lu%%'",
-                                                                       (unsigned long)self.textFontSize];
-                                                 [self.webview stringByEvaluatingJavaScriptFromString:jsString];
+                                                 [self updateTextFontSize];
                                              }];
     
     UIAlertAction *clearCacheAction = [UIAlertAction
