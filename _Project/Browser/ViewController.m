@@ -33,11 +33,11 @@ static UIImage *kDefaultCursor() {
     return image;
 }
 
-static UIImage *kFingerCursor() {
+static UIImage *kPointerCursor() {
     static UIImage *image;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        image = [UIImage imageNamed:@"Finger"];
+        image = [UIImage imageNamed:@"Pointer"];
     });
     return image;
 }
@@ -1406,7 +1406,8 @@ static UIImage *kFingerCursor() {
             self.lastTouchLocation = location;
         }
         
-        // Try to make mouse cursor become finger icon when pointer element is clickable
+        // Try to make mouse cursor become pointer icon when pointer element is clickable
+        cursorView.image = kDefaultCursor();
         if (self.cursorMode) {
             CGPoint point = [self.view convertPoint:cursorView.frame.origin toView:self.webview];
             if(topMenuShowing == YES && point.y < topMenuBrowserOffset) {
@@ -1424,12 +1425,8 @@ static UIImage *kFingerCursor() {
             // Seems not so low, check everytime when touchesMoved
             NSString *containsLink = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).closest('a, input') !== null", (int)point.x, (int)point.y]];
             if ([containsLink isEqualToString:@"true"]) {
-                cursorView.image = kFingerCursor();
-            } else {
-                cursorView.image = kDefaultCursor();
+                cursorView.image = kPointerCursor();
             }
-        } else {
-            cursorView.image = kDefaultCursor();
         }
         
         // We only use one touch, break the loop
