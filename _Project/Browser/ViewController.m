@@ -845,8 +845,14 @@ static UIImage *kPointerCursor() {
                                        }
                                    }];
     
+    UIAlertAction *cancelAction = [UIAlertAction
+                                   actionWithTitle:@"Cancel"
+                                   style:UIAlertActionStyleCancel
+                                   handler:nil];
+    
     [alertController2 addAction:searchAction];
     [alertController2 addAction:goAction];
+    [alertController2 addAction:cancelAction];
     
     [self presentViewController:alertController2 animated:YES completion:nil];
     
