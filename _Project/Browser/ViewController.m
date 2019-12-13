@@ -41,16 +41,13 @@ static UIImage *kPointerCursor() {
 }
 
 @interface ViewController ()
-{
-    UIImageView *cursorView;
-    //UIActivityIndicatorView *loadingSpinner;
-    NSString *requestURL;
-    NSString *previousURL;
-}
 
 @property id webview;
+@property NSString *requestURL;
+@property NSString *previousURL;
 @property (strong) CADisplayLink *link;
 @property (strong, nonatomic) GCController *controller;
+@property UIImageView *cursorView;
 @property BOOL cursorMode;
 @property BOOL displayedHintsOnLaunch;
 @property BOOL scrollViewAllowBounces;
@@ -68,10 +65,10 @@ static UIImage *kPointerCursor() {
 @synthesize topMenuShowing = _topMenuShowing;
 -(void) webViewDidStartLoad:(id)webView {
     //[self.view bringSubviewToFront:loadingSpinner];
-    if (![previousURL isEqualToString:requestURL]) {
+    if (![self.previousURL isEqualToString:self.requestURL]) {
         [self.loadingSpinner startAnimating];
     }
-    previousURL = requestURL;
+    self.previousURL = self.requestURL;
 }
 -(void) webViewDidFinishLoad:(id)webView {
     [self.loadingSpinner stopAnimating];
@@ -207,14 +204,14 @@ static UIImage *kPointerCursor() {
 
     [self.view addGestureRecognizer:self.playPauseDoubleTapRecognizer];
     
-    cursorView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
-    cursorView.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
-    cursorView.image = kDefaultCursor();
-    cursorView.backgroundColor = [UIColor clearColor];
-    cursorView.hidden = YES;
+    self.cursorView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
+    self.cursorView.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
+    self.cursorView.image = kDefaultCursor();
+    self.cursorView.backgroundColor = [UIColor clearColor];
+    self.cursorView.hidden = YES;
     
     
-    [self.view addSubview:cursorView];
+    [self.view addSubview:self.cursorView];
     
     
     
@@ -232,7 +229,7 @@ static UIImage *kPointerCursor() {
     //[self.view bringSubviewToFront:loadingSpinner];
     //ENABLE CURSOR MODE INITIALLY
     self.cursorMode = YES;
-    cursorView.hidden = NO;
+    self.cursorView.hidden = NO;
 }
 
 #pragma mark - FontSize
@@ -593,7 +590,7 @@ static UIImage *kPointerCursor() {
                                                dispatch_sync(dispatch_get_main_queue(), ^{
                                                    [self.webview removeFromSuperview];
                                                    [self initWebView];
-                                                   [self.view bringSubviewToFront:self->cursorView];
+                                                   [self.view bringSubviewToFront:self.cursorView];
                                                    //[self.view bringSubviewToFront:self->loadingSpinner];
                                                    [self webViewDidAppear];
                                                    
@@ -626,7 +623,7 @@ static UIImage *kPointerCursor() {
                                                 dispatch_sync(dispatch_get_main_queue(), ^{
                                                     [self.webview removeFromSuperview];
                                                     [self initWebView];
-                                                    [self.view bringSubviewToFront:self->cursorView];
+                                                    [self.view bringSubviewToFront:self.cursorView];
                                                     //[self.view bringSubviewToFront:self->loadingSpinner];
                                                     [self webViewDidAppear];
                                                     
@@ -700,7 +697,7 @@ static UIImage *kPointerCursor() {
                                        {
                                            [[NSURLCache sharedURLCache] removeAllCachedResponses];
                                            [[NSUserDefaults standardUserDefaults] synchronize];
-                                           self->previousURL = @"";
+                                           self.previousURL = @"";
                                            [self.webview reload];
                                            
                                        }];
@@ -714,7 +711,7 @@ static UIImage *kPointerCursor() {
                                                  [storage deleteCookie:cookie];
                                              }
                                              [[NSUserDefaults standardUserDefaults] synchronize];
-                                             self->previousURL = @"";
+                                             self.previousURL = @"";
                                              [self.webview reload];
                                              
                                          }];
@@ -921,7 +918,7 @@ static UIImage *kPointerCursor() {
                                    style:UIAlertActionStyleDefault
                                    handler:^(UIAlertAction *action)
                                    {
-                                       self->previousURL = @"";
+                                       self.previousURL = @"";
                                        [self.webview reload];
                                    }];
     
@@ -964,7 +961,7 @@ static UIImage *kPointerCursor() {
     
 }
 - (BOOL)webView:(id)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(NSInteger)navigationType {
-    requestURL = request.URL.absoluteString;
+    self.requestURL = request.URL.absoluteString;
     return YES;
 }
 
@@ -981,18 +978,18 @@ static UIImage *kPointerCursor() {
                                        style:UIAlertActionStyleDefault
                                        handler:^(UIAlertAction *action)
                                        {
-                                           if (self->requestURL != nil) {
-                                               if ([self->requestURL length] > 1) {
-                                                   NSString *lastChar = [self->requestURL substringFromIndex: [self->requestURL length] - 1];
+                                           if (self.requestURL != nil) {
+                                               if ([self.requestURL length] > 1) {
+                                                   NSString *lastChar = [self.requestURL substringFromIndex: [self.requestURL length] - 1];
                                                    if ([lastChar isEqualToString:@"/"]) {
-                                                       NSString *newString = [self->requestURL substringToIndex:[self->requestURL length]-1];
-                                                       self->requestURL = newString;
+                                                       NSString *newString = [self.requestURL substringToIndex:[self.requestURL length]-1];
+                                                       self.requestURL = newString;
                                                    }
                                                }
-                                               self->requestURL = [self->requestURL stringByReplacingOccurrencesOfString:@"http://" withString:@""];
-                                               self->requestURL = [self->requestURL stringByReplacingOccurrencesOfString:@"https://" withString:@""];
-                                               self->requestURL = [self->requestURL stringByReplacingOccurrencesOfString:@"www." withString:@""];
-                                               [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", self->requestURL]]]];
+                                               self.requestURL = [self.requestURL stringByReplacingOccurrencesOfString:@"http://" withString:@""];
+                                               self.requestURL = [self.requestURL stringByReplacingOccurrencesOfString:@"https://" withString:@""];
+                                               self.requestURL = [self.requestURL stringByReplacingOccurrencesOfString:@"www." withString:@""];
+                                               [self.webview loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://www.google.com/search?q=%@", self.requestURL]]]];
                                            }
                                            
                                        }];
@@ -1001,7 +998,7 @@ static UIImage *kPointerCursor() {
                                        style:UIAlertActionStyleDefault
                                        handler:^(UIAlertAction *action)
                                        {
-                                           self->previousURL = @"";
+                                           self.previousURL = @"";
                                            [self.webview reload];
                                        }];
         UIAlertAction *newurlAction = [UIAlertAction
@@ -1015,8 +1012,8 @@ static UIImage *kPointerCursor() {
                                        actionWithTitle:nil
                                        style:UIAlertActionStyleCancel
                                        handler:nil];
-        if (requestURL != nil) {
-            if ([requestURL length] > 1) {
+        if (self.requestURL != nil) {
+            if ([self.requestURL length] > 1) {
                 [alertController addAction:searchAction];
             }
         }
@@ -1045,13 +1042,13 @@ static UIImage *kPointerCursor() {
     {
         scrollView.scrollEnabled = NO;
         [self.webview setUserInteractionEnabled:NO];
-        cursorView.hidden = NO;
+        self.cursorView.hidden = NO;
     }
     else
     {
         scrollView.scrollEnabled = YES;
         [self.webview setUserInteractionEnabled:YES];
-        cursorView.hidden = YES;
+        self.cursorView.hidden = YES;
         
         
     }
@@ -1190,7 +1187,7 @@ static UIImage *kPointerCursor() {
             
             
 
-            CGPoint point = [self.view convertPoint:cursorView.frame.origin toView:self.webview];
+            CGPoint point = [self.view convertPoint:self.cursorView.frame.origin toView:self.webview];
             
             if(self.topMenuShowing == YES && point.y < self.topMenuBrowserOffset)
             {
@@ -1412,7 +1409,7 @@ static UIImage *kPointerCursor() {
         {
             CGFloat xDiff = location.x - self.lastTouchLocation.x;
             CGFloat yDiff = location.y - self.lastTouchLocation.y;
-            CGRect rect = cursorView.frame;
+            CGRect rect = self.cursorView.frame;
             
             if(rect.origin.x + xDiff >= 0 && rect.origin.x + xDiff <= 1920)
                 rect.origin.x += xDiff;//location.x - self.startPos.x;//+= xDiff; //location.x;
@@ -1420,14 +1417,14 @@ static UIImage *kPointerCursor() {
             if(rect.origin.y + yDiff >= 0 && rect.origin.y + yDiff <= 1080)
                 rect.origin.y += yDiff;//location.y - self.startPos.y;//+= yDiff; //location.y;
             
-            cursorView.frame = rect;
+            self.cursorView.frame = rect;
             self.lastTouchLocation = location;
         }
         
         // Try to make mouse cursor become pointer icon when pointer element is clickable
-        cursorView.image = kDefaultCursor();
+        self.cursorView.image = kDefaultCursor();
         if (self.cursorMode) {
-            CGPoint point = [self.view convertPoint:cursorView.frame.origin toView:self.webview];
+            CGPoint point = [self.view convertPoint:self.cursorView.frame.origin toView:self.webview];
             if(self.topMenuShowing == YES && point.y < self.topMenuBrowserOffset) {
                 return;
             }
@@ -1443,7 +1440,7 @@ static UIImage *kPointerCursor() {
             // Seems not so low, check everytime when touchesMoved
             NSString *containsLink = [self.webview stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"document.elementFromPoint(%i, %i).closest('a, input') !== null", (int)point.x, (int)point.y]];
             if ([containsLink isEqualToString:@"true"]) {
-                cursorView.image = kPointerCursor();
+                self.cursorView.image = kPointerCursor();
             }
         }
         
