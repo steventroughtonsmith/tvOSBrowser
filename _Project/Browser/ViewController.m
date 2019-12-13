@@ -60,43 +60,6 @@ static UIImage *kPointerCursor() {
 @implementation ViewController
 @synthesize textFontSize = _textFontSize;
 @synthesize topMenuShowing = _topMenuShowing;
--(void) webViewDidStartLoad:(id)webView {
-    //[self.view bringSubviewToFront:loadingSpinner];
-    if (![self.previousURL isEqualToString:self.requestURL]) {
-        [self.loadingSpinner startAnimating];
-    }
-    self.previousURL = self.requestURL;
-}
--(void) webViewDidFinishLoad:(id)webView {
-    [self.loadingSpinner stopAnimating];
-    //[self.view bringSubviewToFront:loadingSpinner];
-    NSString *theTitle=[webView stringByEvaluatingJavaScriptFromString:@"document.title"];
-    NSURLRequest *request = [webView request];
-    NSString *currentURL = request.URL.absoluteString;
-    
-    self.lblUrlBar.text = currentURL;
-    
-    // Update font size
-    [self updateTextFontSize];
-    
-    NSArray *toSaveItem = [NSArray arrayWithObjects:currentURL, theTitle, nil];
-    NSMutableArray *historyArray = [NSMutableArray arrayWithObjects:toSaveItem, nil];
-    if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] != nil) {
-        NSMutableArray *savedArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] mutableCopy];
-        if ([savedArray count] > 0) {
-            if ([savedArray[0][0] isEqualToString: currentURL]) {
-                [historyArray removeObjectAtIndex:0];
-            }
-        }
-        [historyArray addObjectsFromArray:[[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"]];
-    }
-    while ([historyArray count] > 100) {
-        [historyArray removeLastObject];
-    }
-    NSArray *toStoreArray = historyArray;
-    [[NSUserDefaults standardUserDefaults] setObject:toStoreArray forKey:@"HISTORY"];
-    [[NSUserDefaults standardUserDefaults] synchronize];
-}
 -(void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     //loadingSpinner.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
@@ -229,7 +192,7 @@ static UIImage *kPointerCursor() {
     self.cursorView.hidden = NO;
 }
 
-#pragma mark - FontSize
+#pragma mark - Font Size
 - (NSUInteger)textFontSize {
     if (_textFontSize == 0) {
         NSNumber *textFontSizeValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"TextFontSize"];
@@ -262,7 +225,7 @@ static UIImage *kPointerCursor() {
     [self.webview stringByEvaluatingJavaScriptFromString:jsString];
 }
 
-#pragma mark - Navigation Bar
+#pragma mark - Top Navigation Bar
 - (BOOL)topMenuShowing {
     if (!_topMenuShowing) {
         NSNumber *topMenuShowingValue =  [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowTopNavigationBar"];
@@ -765,7 +728,7 @@ static UIImage *kPointerCursor() {
     [self presentViewController:alertController animated:YES completion:nil];
 }
 
-
+#pragma mark - Gesture
 -(void)handlePlayPauseDoubleTap:(UITapGestureRecognizer *)sender {
     if (sender.state == UIGestureRecognizerStateEnded) {
         [self showAdvancedMenu];
@@ -957,6 +920,44 @@ static UIImage *kPointerCursor() {
     
     
 }
+#pragma mark - UIWebViewDelegate
+-(void) webViewDidStartLoad:(id)webView {
+    //[self.view bringSubviewToFront:loadingSpinner];
+    if (![self.previousURL isEqualToString:self.requestURL]) {
+        [self.loadingSpinner startAnimating];
+    }
+    self.previousURL = self.requestURL;
+}
+-(void) webViewDidFinishLoad:(id)webView {
+    [self.loadingSpinner stopAnimating];
+    //[self.view bringSubviewToFront:loadingSpinner];
+    NSString *theTitle=[webView stringByEvaluatingJavaScriptFromString:@"document.title"];
+    NSURLRequest *request = [webView request];
+    NSString *currentURL = request.URL.absoluteString;
+    
+    self.lblUrlBar.text = currentURL;
+    
+    // Update font size
+    [self updateTextFontSize];
+    
+    NSArray *toSaveItem = [NSArray arrayWithObjects:currentURL, theTitle, nil];
+    NSMutableArray *historyArray = [NSMutableArray arrayWithObjects:toSaveItem, nil];
+    if ([[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] != nil) {
+        NSMutableArray *savedArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"] mutableCopy];
+        if ([savedArray count] > 0) {
+            if ([savedArray[0][0] isEqualToString: currentURL]) {
+                [historyArray removeObjectAtIndex:0];
+            }
+        }
+        [historyArray addObjectsFromArray:[[NSUserDefaults standardUserDefaults] arrayForKey:@"HISTORY"]];
+    }
+    while ([historyArray count] > 100) {
+        [historyArray removeLastObject];
+    }
+    NSArray *toStoreArray = historyArray;
+    [[NSUserDefaults standardUserDefaults] setObject:toStoreArray forKey:@"HISTORY"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
 - (BOOL)webView:(id)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(NSInteger)navigationType {
     self.requestURL = request.URL.absoluteString;
     return YES;
@@ -1031,6 +1032,7 @@ static UIImage *kPointerCursor() {
         [self presentViewController:alertController animated:YES completion:nil];
     }
 }
+#pragma mark - Helper
 -(void)toggleMode
 {
     self.cursorMode = !self.cursorMode;
@@ -1132,6 +1134,7 @@ static UIImage *kPointerCursor() {
      }
      */
 }
+#pragma mark - Remote Button
 -(void)pressesEnded:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event
 {
     
