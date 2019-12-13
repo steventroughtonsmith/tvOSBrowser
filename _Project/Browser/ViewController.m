@@ -716,7 +716,6 @@ static UIImage *kPointerCursor() {
      }
      }
      */
-    [alertController addAction:topBarAction];
 
     [alertController addAction:viewFavoritesAction];
     [alertController addAction:viewHistoryAction];
@@ -729,6 +728,7 @@ static UIImage *kPointerCursor() {
     else {
         [alertController addAction:mobileModeAction];
     }
+    [alertController addAction:topBarAction];
     if ([self.webview scalesPageToFit]) {
         [alertController addAction:stopScalePageToFitAction];
     } else {
