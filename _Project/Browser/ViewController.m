@@ -529,7 +529,7 @@ static UIImage *kPointerCursor() {
                                        style:UIAlertActionStyleDefault
                                        handler:^(UIAlertAction *action)
                                        {
-                                           NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:@"Mozilla/5.0 (iPad; CPU OS 10_0 like Mac OS X) AppleWebKit/602.1.38 (KHTML, like Gecko) Version/10.0 Mobile/14A300 Safari/602.1", @"UserAgent", nil];
+                                           NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:@"Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/604.1", @"UserAgent", nil];
                                            [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MobileMode"];
                                            [[NSUserDefaults standardUserDefaults] synchronize];
@@ -562,7 +562,7 @@ static UIImage *kPointerCursor() {
                                         style:UIAlertActionStyleDefault
                                         handler:^(UIAlertAction *action)
                                         {
-                                            NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:@"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_2) AppleWebKit/602.3.12 (KHTML, like Gecko) Version/10.0.2 Safari/602.3.12", @"UserAgent", nil];
+                                            NSDictionary *dictionary = [NSDictionary dictionaryWithObjectsAndKeys:@"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15", @"UserAgent", nil];
                                             [[NSUserDefaults standardUserDefaults] registerDefaults:dictionary];
                                             [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MobileMode"];
                                             [[NSUserDefaults standardUserDefaults] synchronize];
