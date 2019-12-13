@@ -1423,6 +1423,9 @@ static UIImage *kPointerCursor() {
         
         // Try to make mouse cursor become pointer icon when pointer element is clickable
         self.cursorView.image = kDefaultCursor();
+        if ([self.webview request] == nil) {
+            return;
+        }
         if (self.cursorMode) {
             CGPoint point = [self.view convertPoint:self.cursorView.frame.origin toView:self.webview];
             if(self.topMenuShowing == YES && point.y < self.topMenuBrowserOffset) {
