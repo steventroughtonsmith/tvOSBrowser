@@ -112,7 +112,7 @@ static UIImage *kPointerCursor() {
     }
     
     NSNumber *showTopNavBar = [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowTopNavigationBar"];
-    self.topMenuView.hidden = showTopNavBar ? showTopNavBar.boolValue : YES;
+    self.topMenuView.hidden = !(showTopNavBar ? showTopNavBar.boolValue : YES);
     [self updateTopNavAndWebView];
     //scrollView.contentOffset = CGPointMake(0, topHeight);
     scrollView.contentOffset = CGPointZero;
