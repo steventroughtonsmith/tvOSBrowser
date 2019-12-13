@@ -370,11 +370,9 @@ static UIImage *kPointerCursor() {
                                           [self showHintsAlert];
                                       }];
     UIAlertAction *cancelAction = [UIAlertAction
-                                   actionWithTitle:@"Cancel"
+                                   actionWithTitle:nil
                                    style:UIAlertActionStyleCancel
-                                   handler:^(UIAlertAction *action)
-                                   {
-                                   }];
+                                   handler:nil];
     UIAlertAction *viewFavoritesAction = [UIAlertAction
                                           actionWithTitle:@"Favorites"
                                           style:UIAlertActionStyleDefault
@@ -846,7 +844,7 @@ static UIImage *kPointerCursor() {
                                    }];
     
     UIAlertAction *cancelAction = [UIAlertAction
-                                   actionWithTitle:@"Cancel"
+                                   actionWithTitle:nil
                                    style:UIAlertActionStyleCancel
                                    handler:nil];
     
@@ -909,11 +907,9 @@ static UIImage *kPointerCursor() {
     
     
     UIAlertAction *cancelAction = [UIAlertAction
-                                   actionWithTitle:@"Cancel"
+                                   actionWithTitle:nil
                                    style:UIAlertActionStyleCancel
-                                   handler:^(UIAlertAction *action)
-                                   {
-                                   }];
+                                   handler:nil];
     
     UIAlertAction *inputAction = [UIAlertAction
                                   actionWithTitle:@"Input URL or Search with Google"
@@ -935,9 +931,9 @@ static UIImage *kPointerCursor() {
     if (request != nil) {
         if (![request.URL.absoluteString  isEqual: @""]) {
             [alertController addAction:reloadAction];
-            [alertController addAction:cancelAction];
         }
     }
+    [alertController addAction:cancelAction];
     
     [self presentViewController:alertController animated:YES completion:nil];
     
@@ -996,11 +992,9 @@ static UIImage *kPointerCursor() {
                                            [self requestURLorSearchInput];
                                        }];
         UIAlertAction *cancelAction = [UIAlertAction
-                                       actionWithTitle:@"Dismiss"
+                                       actionWithTitle:nil
                                        style:UIAlertActionStyleCancel
-                                       handler:^(UIAlertAction *action)
-                                       {
-                                       }];
+                                       handler:nil];
         if (requestURL != nil) {
             if ([requestURL length] > 1) {
                 [alertController addAction:searchAction];
@@ -1144,7 +1138,7 @@ static UIImage *kPointerCursor() {
             [alert addAction:[UIAlertAction actionWithTitle:@"Exit" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
                 exit(EXIT_SUCCESS);
             }]];
-            [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+            [alert addAction:[UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleCancel handler:nil]];
             [self presentViewController:alert animated:YES completion:nil];
         }
         /*
@@ -1338,11 +1332,9 @@ static UIImage *kPointerCursor() {
                                                   [self.webview stringByEvaluatingJavaScriptFromString:javaScript];
                                               }];
                 UIAlertAction *cancelAction = [UIAlertAction
-                                               actionWithTitle:@"Cancel"
+                                               actionWithTitle:nil
                                                style:UIAlertActionStyleCancel
-                                               handler:^(UIAlertAction *action)
-                                               {
-                                               }];
+                                               handler:nil];
                 [alertController addAction:inputAction];
                 if (testedFormResponse != nil) {
                     if ([testedFormResponse isEqualToString:@"true"]) {
