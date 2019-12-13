@@ -10,7 +10,6 @@
 
 
 #import "ViewController.h"
-#import <GameController/GameController.h>
 
 #pragma mark - UI
 
@@ -45,8 +44,6 @@ static UIImage *kPointerCursor() {
 @property id webview;
 @property NSString *requestURL;
 @property NSString *previousURL;
-@property (strong) CADisplayLink *link;
-@property (strong, nonatomic) GCController *controller;
 @property UIImageView *cursorView;
 @property BOOL cursorMode;
 @property BOOL displayedHintsOnLaunch;
