@@ -50,8 +50,8 @@ static UIImage *kPointerCursor() {
 @property BOOL scrollViewAllowBounces;
 @property CGPoint lastTouchLocation;
 @property NSUInteger textFontSize;
-@property BOOL topMenuShowing;
-@property CGFloat topMenuBrowserOffset;
+@property (readonly) BOOL topMenuShowing;
+@property (readonly) CGFloat topMenuBrowserOffset;
 @property UITapGestureRecognizer *touchSurfaceDoubleTapRecognizer;
 @property UITapGestureRecognizer *playPauseDoubleTapRecognizer;
 
@@ -59,7 +59,6 @@ static UIImage *kPointerCursor() {
 
 @implementation ViewController
 @synthesize textFontSize = _textFontSize;
-@synthesize topMenuShowing = _topMenuShowing;
 -(void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     //loadingSpinner.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
@@ -90,7 +89,6 @@ static UIImage *kPointerCursor() {
 }
 -(void)initWebView {
     if (@available(tvOS 11.0, *)) {
-        self.view.insetsLayoutMarginsFromSafeArea = false;
         self.additionalSafeAreaInsets = UIEdgeInsetsZero;
     }
     self.webview = [[NSClassFromString(@"UIWebView") alloc] init];
@@ -102,57 +100,42 @@ static UIImage *kPointerCursor() {
     //[self.view addSubview: self.webview];
     [self.browserContainerView addSubview: self.webview];
 
-    [self.webview setFrame:self.view.frame];
+    [self.webview setFrame:self.view.bounds];
     [self.webview setDelegate:self];
     [self.webview setLayoutMargins:UIEdgeInsetsZero];
     UIScrollView *scrollView = [self.webview scrollView];
     [scrollView setLayoutMargins:UIEdgeInsetsZero];
     if (@available(tvOS 11.0, *)) {
-        scrollView.insetsLayoutMarginsFromSafeArea = false;
+        scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    } else {
+        self.automaticallyAdjustsScrollViewInsets = NO;
     }
     
-    self.topMenuBrowserOffset = self.topMenuView.frame.size.height;
+    NSNumber *showTopNavBar = [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowTopNavigationBar"];
+    self.topMenuView.hidden = showTopNavBar ? showTopNavBar.boolValue : YES;
+    [self updateTopNavAndWebView];
     //scrollView.contentOffset = CGPointMake(0, topHeight);
     scrollView.contentOffset = CGPointZero;
     
     scrollView.contentInset = UIEdgeInsetsZero;
-    scrollView.frame = self.view.frame;
+    scrollView.frame = self.view.bounds;
     scrollView.clipsToBounds = NO;
     [scrollView setNeedsLayout];
     [scrollView layoutIfNeeded];
     [self.view setNeedsLayout];
     [self.view layoutIfNeeded];
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
-        CGPoint point = CGPointMake(60, 90);
-
-        scrollView.contentInset = UIEdgeInsetsMake(-point.x + self.topMenuBrowserOffset, -point.y, -point.x, -point.y);
-        [self offsetCorrection:YES];
-    } else {
-        [self offsetCorrection:NO];
-    }
     scrollView.bounces = _scrollViewAllowBounces;
     scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
     scrollView.scrollEnabled = NO;
     
     [self.webview setUserInteractionEnabled:NO];
 }
--(void)offsetCorrection:(bool)yes {
-    UIScrollView *scrollView = [self.webview scrollView];
-    if (yes) {
-        CGPoint point = CGPointMake(60, 90);
-
-        scrollView.contentInset = UIEdgeInsetsMake(-point.x + self.topMenuBrowserOffset, -point.y, -point.x, -point.y);
-    } else {
-        scrollView.contentInset = UIEdgeInsetsZero;
-    }
-}
 -(void)viewDidLoad {
-    self.automaticallyAdjustsScrollViewInsets = NO;
+    [super viewDidLoad];
     self.definesPresentationContext = YES;
     
     [self initWebView];
     _scrollViewAllowBounces = YES;
-    [super viewDidLoad];
     self.touchSurfaceDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleTouchSurfaceDoubleTap:)];
     self.touchSurfaceDoubleTapRecognizer.numberOfTapsRequired = 2;
     self.touchSurfaceDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypeSelect]];
@@ -226,69 +209,44 @@ static UIImage *kPointerCursor() {
 }
 
 #pragma mark - Top Navigation Bar
+
 - (BOOL)topMenuShowing {
-    if (!_topMenuShowing) {
-        NSNumber *topMenuShowingValue =  [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowTopNavigationBar"];
-        if (topMenuShowingValue != nil) {
-            _topMenuShowing = [topMenuShowingValue boolValue];
-        } else {
-            _topMenuShowing = YES;
-        }
-    }
-    return _topMenuShowing;
+    return !self.topMenuView.isHidden;
 }
 
-- (void)setTopMenuShowing:(BOOL)topMenuShowing {
-    if (_topMenuShowing == topMenuShowing) {
-        return;
+- (CGFloat)topMenuBrowserOffset {
+    if (self.topMenuShowing) {
+        return self.topMenuView.frame.size.height;
+    } else {
+        return 0;
     }
-    [[NSUserDefaults standardUserDefaults] setObject:@(topMenuShowing) forKey:@"ShowTopNavigationBar"];
-    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 -(void)hideTopNav
 {
     [self.topMenuView setHidden:YES];
-    self.topMenuShowing = NO;
-    self.topMenuBrowserOffset = 0;
     
-    
-    UIScrollView *scrollView = [self.webview scrollView];
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
-        CGPoint point = CGPointMake(60, 90);
-        
-        scrollView.contentInset = UIEdgeInsetsMake(-point.x + self.topMenuBrowserOffset, -point.y, -point.x, -point.y);
-        [self offsetCorrection:YES];
-    } else {
-        [self offsetCorrection:NO];
-    }
-    
-    
-
-    [self.webview reload];
-
+    [self updateTopNavAndWebView];
+    [[NSUserDefaults standardUserDefaults] setObject:@(NO) forKey:@"ShowTopNavigationBar"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 -(void)showTopNav
 {
     [self.topMenuView setHidden:NO];
-    self.topMenuShowing = YES;
-    self.topMenuBrowserOffset = self.topMenuView.frame.size.height;
     
-    
-    UIScrollView *scrollView = [self.webview scrollView];
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
-        CGPoint point = CGPointMake(60, 90);
-        
-        scrollView.contentInset = UIEdgeInsetsMake(-point.x + self.topMenuBrowserOffset, -point.y, -point.x, -point.y);
-        [self offsetCorrection:YES];
+    [self updateTopNavAndWebView];
+    [[NSUserDefaults standardUserDefaults] setObject:@(YES) forKey:@"ShowTopNavigationBar"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+-(void)updateTopNavAndWebView
+{
+    if (self.topMenuShowing) {
+        [self.webview setFrame:CGRectMake(self.view.bounds.origin.x, self.view.bounds.origin.y + self.topMenuBrowserOffset, self.view.bounds.size.width, self.view.bounds.size.height - self.topMenuBrowserOffset)];
     } else {
-        [self offsetCorrection:NO];
+        [self.webview setFrame:self.view.bounds];
     }
-    
-
-    [self.webview reload];
-
 }
 
 -(void)showAdvancedMenu
@@ -611,26 +569,6 @@ static UIImage *kPointerCursor() {
                                                    [self.webview setScalesPageToFit:NO];
                                                    [self.webview reload];
                                                }];
-    UIAlertAction *disableOffsetCorrectionAction = [UIAlertAction
-                                                    actionWithTitle:@"Stop Correcting Offset"
-                                                    style:UIAlertActionStyleDefault
-                                                    handler:^(UIAlertAction *action)
-                                                    {
-                                                        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"DisableOffsetCorrection"];
-                                                        [[NSUserDefaults standardUserDefaults] synchronize];
-                                                        [self offsetCorrection:NO];
-                                                        [self.webview reload];
-                                                    }];
-    UIAlertAction *enableOffsetCorrectionAction = [UIAlertAction
-                                                   actionWithTitle:@"Enable Offset Correction"
-                                                   style:UIAlertActionStyleDefault
-                                                   handler:^(UIAlertAction *action)
-                                                   {
-                                                       [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"DisableOffsetCorrection"];
-                                                       [[NSUserDefaults standardUserDefaults] synchronize];
-                                                       [self offsetCorrection:YES];
-                                                       [self.webview reload];
-                                                   }];
     
     UIAlertAction *increaseFontSizeAction = [UIAlertAction
                                              actionWithTitle:@"Increase Font Size"
@@ -710,13 +648,6 @@ static UIImage *kPointerCursor() {
         [alertController addAction:stopScalePageToFitAction];
     } else {
         [alertController addAction:scalePageToFitAction];
-    }
-    
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
-        [alertController addAction:enableOffsetCorrectionAction];
-    }
-    else {
-        [alertController addAction:disableOffsetCorrectionAction];
     }
     
     [alertController addAction:increaseFontSizeAction];
@@ -1189,10 +1120,10 @@ static UIImage *kPointerCursor() {
 
             CGPoint point = [self.view convertPoint:self.cursorView.frame.origin toView:self.webview];
             
-            if(self.topMenuShowing == YES && point.y < self.topMenuBrowserOffset)
+            if(point.y < 0)
             {
                 // Handle menu buttons press
-                
+                point = [self.view convertPoint:self.cursorView.frame.origin toView:self.topMenuView];
                 CGRect backBtnFrameExtra = self.btnImageBack.frame;
                 backBtnFrameExtra.origin.y = 0; // Enable cursor in upper right corner
                 backBtnFrameExtra.size.height = backBtnFrameExtra.size.height+ 8;// Enable cursor in upper right corner
@@ -1247,8 +1178,6 @@ static UIImage *kPointerCursor() {
             }
             else // Handle Press in the Browser view
             {
-            
-            point.y = point.y - self.topMenuBrowserOffset;
             
             int displayWidth = [[self.webview stringByEvaluatingJavaScriptFromString:@"window.innerWidth"] intValue];
             CGFloat scale = [self.webview frame].size.width / displayWidth;
@@ -1428,11 +1357,9 @@ static UIImage *kPointerCursor() {
         }
         if (self.cursorMode) {
             CGPoint point = [self.view convertPoint:self.cursorView.frame.origin toView:self.webview];
-            if(self.topMenuShowing == YES && point.y < self.topMenuBrowserOffset) {
+            if(point.y < 0) {
                 return;
             }
-            
-            point.y = point.y - self.topMenuBrowserOffset;
             
             int displayWidth = [[self.webview stringByEvaluatingJavaScriptFromString:@"window.innerWidth"] intValue];
             CGFloat scale = [self.webview frame].size.width / displayWidth;
