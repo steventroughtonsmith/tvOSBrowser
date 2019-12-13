@@ -12,9 +12,7 @@
 #import "ViewController.h"
 #import <GameController/GameController.h>
 
-#define kMaxTextFontSize 160
-#define kMinTextFontSize 50
-#define kDefaultTextFontSize 100
+#pragma mark - UI
 
 static UIColor *kTextColor() {
     if (@available(tvOS 13, *)) {
@@ -58,6 +56,8 @@ static UIImage *kPointerCursor() {
 @property BOOL scrollViewAllowBounces;
 @property CGPoint lastTouchLocation;
 @property NSUInteger textFontSize;
+@property BOOL topMenuShowing;
+@property CGFloat topMenuBrowserOffset;
 @property UITapGestureRecognizer *touchSurfaceDoubleTapRecognizer;
 @property UITapGestureRecognizer *playPauseDoubleTapRecognizer;
 
@@ -65,6 +65,7 @@ static UIImage *kPointerCursor() {
 
 @implementation ViewController
 @synthesize textFontSize = _textFontSize;
+@synthesize topMenuShowing = _topMenuShowing;
 -(void) webViewDidStartLoad:(id)webView {
     //[self.view bringSubviewToFront:loadingSpinner];
     if (![previousURL isEqualToString:requestURL]) {
@@ -153,7 +154,7 @@ static UIImage *kPointerCursor() {
         scrollView.insetsLayoutMarginsFromSafeArea = false;
     }
     
-    topMenuBrowserOffset = self.topMenuView.frame.size.height;
+    self.topMenuBrowserOffset = self.topMenuView.frame.size.height;
     //scrollView.contentOffset = CGPointMake(0, topHeight);
     scrollView.contentOffset = CGPointZero;
     
@@ -167,7 +168,7 @@ static UIImage *kPointerCursor() {
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
         CGPoint point = CGPointMake(60, 90);
 
-        scrollView.contentInset = UIEdgeInsetsMake(-point.x + topMenuBrowserOffset, -point.y, -point.x, -point.y);
+        scrollView.contentInset = UIEdgeInsetsMake(-point.x + self.topMenuBrowserOffset, -point.y, -point.x, -point.y);
         [self offsetCorrection:YES];
     } else {
         [self offsetCorrection:NO];
@@ -183,7 +184,7 @@ static UIImage *kPointerCursor() {
     if (yes) {
         CGPoint point = CGPointMake(60, 90);
 
-        scrollView.contentInset = UIEdgeInsetsMake(-point.x + topMenuBrowserOffset, -point.y, -point.x, -point.y);
+        scrollView.contentInset = UIEdgeInsetsMake(-point.x + self.topMenuBrowserOffset, -point.y, -point.x, -point.y);
     } else {
         scrollView.contentInset = UIEdgeInsetsZero;
     }
@@ -191,8 +192,6 @@ static UIImage *kPointerCursor() {
 -(void)viewDidLoad {
     self.automaticallyAdjustsScrollViewInsets = NO;
     self.definesPresentationContext = YES;
-    
-    topMenuShowing = YES;
     
     [self initWebView];
     _scrollViewAllowBounces = YES;
@@ -243,10 +242,10 @@ static UIImage *kPointerCursor() {
         if (textFontSizeValue != nil) {
             // Limit font size
             NSUInteger textFontSize = textFontSizeValue.unsignedIntegerValue;
-            _textFontSize = MIN(kMaxTextFontSize, MAX(kMinTextFontSize, textFontSize));
+            _textFontSize = MIN(200, MAX(50, textFontSize));
         } else {
             // Default font size
-            _textFontSize = kDefaultTextFontSize;
+            _textFontSize = 100;
         }
     }
     return _textFontSize;
@@ -257,7 +256,7 @@ static UIImage *kPointerCursor() {
         return;
     }
     // Limit font size
-    textFontSize = MIN(kMaxTextFontSize, MAX(kMinTextFontSize, textFontSize));
+    textFontSize = MIN(200, MAX(50, textFontSize));
     _textFontSize = textFontSize;
     [[NSUserDefaults standardUserDefaults] setObject:@(textFontSize) forKey:@"TextFontSize"];
     [[NSUserDefaults standardUserDefaults] synchronize];
@@ -269,18 +268,39 @@ static UIImage *kPointerCursor() {
     [self.webview stringByEvaluatingJavaScriptFromString:jsString];
 }
 
+#pragma mark - Navigation Bar
+- (BOOL)topMenuShowing {
+    if (!_topMenuShowing) {
+        NSNumber *topMenuShowingValue =  [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowTopNavigationBar"];
+        if (topMenuShowingValue != nil) {
+            _topMenuShowing = [topMenuShowingValue boolValue];
+        } else {
+            _topMenuShowing = YES;
+        }
+    }
+    return _topMenuShowing;
+}
+
+- (void)setTopMenuShowing:(BOOL)topMenuShowing {
+    if (_topMenuShowing == topMenuShowing) {
+        return;
+    }
+    [[NSUserDefaults standardUserDefaults] setObject:@(topMenuShowing) forKey:@"ShowTopNavigationBar"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
 -(void)hideTopNav
 {
     [self.topMenuView setHidden:YES];
-    topMenuShowing = NO;
-    topMenuBrowserOffset = 0;
+    self.topMenuShowing = NO;
+    self.topMenuBrowserOffset = 0;
     
     
     UIScrollView *scrollView = [self.webview scrollView];
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
         CGPoint point = CGPointMake(60, 90);
         
-        scrollView.contentInset = UIEdgeInsetsMake(-point.x + topMenuBrowserOffset, -point.y, -point.x, -point.y);
+        scrollView.contentInset = UIEdgeInsetsMake(-point.x + self.topMenuBrowserOffset, -point.y, -point.x, -point.y);
         [self offsetCorrection:YES];
     } else {
         [self offsetCorrection:NO];
@@ -295,15 +315,15 @@ static UIImage *kPointerCursor() {
 -(void)showTopNav
 {
     [self.topMenuView setHidden:NO];
-    topMenuShowing = YES;
-    topMenuBrowserOffset = self.topMenuView.frame.size.height;
+    self.topMenuShowing = YES;
+    self.topMenuBrowserOffset = self.topMenuView.frame.size.height;
     
     
     UIScrollView *scrollView = [self.webview scrollView];
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DisableOffsetCorrection"]) {
         CGPoint point = CGPointMake(60, 90);
         
-        scrollView.contentInset = UIEdgeInsetsMake(-point.x + topMenuBrowserOffset, -point.y, -point.x, -point.y);
+        scrollView.contentInset = UIEdgeInsetsMake(-point.x + self.topMenuBrowserOffset, -point.y, -point.x, -point.y);
         [self offsetCorrection:YES];
     } else {
         [self offsetCorrection:NO];
@@ -322,7 +342,7 @@ static UIImage *kPointerCursor() {
                                           preferredStyle:UIAlertControllerStyleAlert];
     
     UIAlertAction *topBarAction;
-    if(topMenuShowing == YES)
+    if(self.topMenuShowing == YES)
     {
        topBarAction = [UIAlertAction
                                          actionWithTitle:@"Hide Top Navigation bar"
@@ -1172,7 +1192,7 @@ static UIImage *kPointerCursor() {
 
             CGPoint point = [self.view convertPoint:cursorView.frame.origin toView:self.webview];
             
-            if(topMenuShowing == YES && point.y < topMenuBrowserOffset)
+            if(self.topMenuShowing == YES && point.y < self.topMenuBrowserOffset)
             {
                 // Handle menu buttons press
                 
@@ -1207,7 +1227,7 @@ static UIImage *kPointerCursor() {
                 {
                     // Hide/show top bar:
                     
-                    if(topMenuShowing)
+                    if(self.topMenuShowing)
                         [self hideTopNav];
                     else
                         [self showTopNav];
@@ -1231,7 +1251,7 @@ static UIImage *kPointerCursor() {
             else // Handle Press in the Browser view
             {
             
-            point.y = point.y - topMenuBrowserOffset;
+            point.y = point.y - self.topMenuBrowserOffset;
             
             int displayWidth = [[self.webview stringByEvaluatingJavaScriptFromString:@"window.innerWidth"] intValue];
             CGFloat scale = [self.webview frame].size.width / displayWidth;
@@ -1408,11 +1428,11 @@ static UIImage *kPointerCursor() {
         cursorView.image = kDefaultCursor();
         if (self.cursorMode) {
             CGPoint point = [self.view convertPoint:cursorView.frame.origin toView:self.webview];
-            if(topMenuShowing == YES && point.y < topMenuBrowserOffset) {
+            if(self.topMenuShowing == YES && point.y < self.topMenuBrowserOffset) {
                 return;
             }
             
-            point.y = point.y - topMenuBrowserOffset;
+            point.y = point.y - self.topMenuBrowserOffset;
             
             int displayWidth = [[self.webview stringByEvaluatingJavaScriptFromString:@"window.innerWidth"] intValue];
             CGFloat scale = [self.webview frame].size.width / displayWidth;
