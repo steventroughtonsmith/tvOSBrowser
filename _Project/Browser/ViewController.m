@@ -124,7 +124,7 @@ static UIImage *kPointerCursor() {
     [scrollView layoutIfNeeded];
     [self.view setNeedsLayout];
     [self.view layoutIfNeeded];
-    scrollView.bounces = _scrollViewAllowBounces;
+    scrollView.bounces = self.scrollViewAllowBounces;
     scrollView.panGestureRecognizer.allowedTouchTypes = @[ @(UITouchTypeIndirect) ];
     scrollView.scrollEnabled = NO;
     
@@ -135,7 +135,7 @@ static UIImage *kPointerCursor() {
     self.definesPresentationContext = YES;
     
     [self initWebView];
-    _scrollViewAllowBounces = YES;
+    self.scrollViewAllowBounces = YES;
     self.touchSurfaceDoubleTapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(handleTouchSurfaceDoubleTap:)];
     self.touchSurfaceDoubleTapRecognizer.numberOfTapsRequired = 2;
     self.touchSurfaceDoubleTapRecognizer.allowedPressTypes = @[[NSNumber numberWithInteger:UIPressTypeSelect]];
@@ -150,10 +150,6 @@ static UIImage *kPointerCursor() {
     self.cursorView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
     self.cursorView.center = CGPointMake(CGRectGetMidX([UIScreen mainScreen].bounds), CGRectGetMidY([UIScreen mainScreen].bounds));
     self.cursorView.image = kDefaultCursor();
-    self.cursorView.backgroundColor = [UIColor clearColor];
-    self.cursorView.hidden = YES;
-    
-    
     [self.view addSubview:self.cursorView];
     
     
