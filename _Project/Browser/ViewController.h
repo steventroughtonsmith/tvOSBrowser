@@ -10,10 +10,6 @@
 #import <GameKit/GameKit.h>
 
 @interface ViewController : GCEventViewController
-{
-    CGFloat topMenuBrowserOffset;
-    Boolean topMenuShowing;
-}
 
 @property (nonatomic, retain) IBOutlet UIVisualEffectView *topMenuView;
 @property (nonatomic, retain) IBOutlet UIView *browserContainerView;

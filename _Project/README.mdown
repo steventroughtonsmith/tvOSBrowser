@@ -23,7 +23,8 @@ How to Use tvOSBrowser
 Quick start:
 - Double press on the center of the touch area of the Apple TV Remote to switch between cursor & scroll mode.
 - Press the touch area while in cursor mode to click.
-- Single tap the Play/Pause button to show the Quick Menu, with: input URLs, search Google, reload the page, or navigate back.
+- Single tap to Menu button to go back, or exit if it's root page.
+- Single tap the Play/Pause button to show the Quick Menu, with: input URLs, search Google, reload the page, or go forward.
 - Double tap the Play/Pause button to: display the Advanced Menu, with: Favorites, History, set/open homepage, change user agent, clear cache, and clear cookies and more.
 
 The Avanced menu lets you:
