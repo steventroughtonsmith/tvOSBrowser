@@ -37,5 +37,5 @@ The Avanced menu lets you:
 - Enable/Disable WebView offset correction
 - Increase/decrease font size
 - Clear cache
-- Cleare cookies
+- Clear cookies
 - Show the usage guide
