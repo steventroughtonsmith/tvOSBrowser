@@ -17,7 +17,9 @@ How to Install tvOS Browser
 
 To install this app, connect your Apple TV to your macOS computer via USB. Open this project in XCode, and first do the following:
 Set the proper deployment target, and change the Bundle Identifier to your own identifier:
+
 ![Alt text](/readme_instruction_01.png?raw=true "Change bundle ID to your own")
+
 Next, remember to change to your own Team in Signing & Capabilities:
 ![Alt text](/readme_instruction_02.png?raw=true "Change Team setting")
 
