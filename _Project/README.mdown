@@ -1,5 +1,4 @@
-tvOS Browser:
-Web browser for AppleTV
+tvOS Browser
 =============
 
 ![Alt text](/screen01.jpg?raw=true "tvOS Browser on AppleTV")
@@ -15,18 +14,8 @@ The private UIWebView is now initialized using NSClassFromString(@"UIWebView"), 
 How to Install tvOS Browser
 =============
 
-To install this app, connect your Apple TV to your macOS computer via USB. Open this project in XCode, and first do the following:
-Set the proper deployment target, and change the Bundle Identifier to your own identifier:
-
-![Alt text](/readme_instruction_01.png?raw=true "Change bundle ID to your own")
-
-Next, remember to change to your own Team in Signing & Capabilities:
-![Alt text](/readme_instruction_02.png?raw=true "Change Team setting")
-
-Then Run the project, with your AppleTV as target device.
+To install this app, connect your Apple TV to your macOS computer via USB. Open this project in XCode and install to your Apple TV.
 If your Apple TV does not have a USB-C port or you don't have a cable, connect to your Apple TV wirelessly: http://www.redmondpie.com/how-to-wirelessly-connect-apple-tv-4k-to-xcode-on-mac/.
-
-
 
 How to Use tvOSBrowser
 =============
@@ -34,7 +23,8 @@ How to Use tvOSBrowser
 Quick start:
 - Double press on the center of the touch area of the Apple TV Remote to switch between cursor & scroll mode.
 - Press the touch area while in cursor mode to click.
-- Single tap the Play/Pause button to show the Quick Menu, with: input URLs, search Google, reload the page, or navigate back.
+- Single tap to Menu button to go back, or exit if it's root page.
+- Single tap the Play/Pause button to show the Quick Menu, with: input URLs, search Google, reload the page, or go forward.
 - Double tap the Play/Pause button to: display the Advanced Menu, with: Favorites, History, set/open homepage, change user agent, clear cache, and clear cookies and more.
 
 The Avanced menu lets you:
@@ -47,5 +37,5 @@ The Avanced menu lets you:
 - Enable/Disable WebView offset correction
 - Increase/decrease font size
 - Clear cache
-- Clear cookies
+- Cleare cookies
 - Show the usage guide
